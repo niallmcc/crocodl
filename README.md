@@ -1,6 +1,10 @@
 # simpledl
 
-simple deep learning demo
+Simple Deep Learning Demo, does not require GPU.  
+
+Currently supports:
+
+* Image Classification (with transfer learning, based on VGG16)
 
 ## installation
 
@@ -11,15 +15,15 @@ pip3 install -r requirements.txt
 (cd data; unzip dogs_vs_cats.zip)
 ```
 
-## train model (dogs vs cats classifier based on VGG16)
+## train model (open folder data/dogs_vs_cats for example)
 
 ```
-python3 train.py
+python3 -m gui.trainer
 ```
 
-## score sample images - opens simple gui
+## score an image (need to train a model first, see above)
 
 ```
-python3 score.py
+python3 -m gui.scorer
 ```
 

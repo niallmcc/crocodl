@@ -12,37 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import json
 from tkinter import *
 from tkinter import filedialog
 from PIL import Image, ImageTk
 
-from keras.preprocessing.image import load_img
-from keras.preprocessing.image import img_to_array
-from keras.models import load_model
-
-model = load_model('model.h5')
-metadata = json.loads(open('model.json').read())
-
-def load_image(filename):
-	img = load_img(filename, target_size=(224, 224))
-	img = img_to_array(img)
-	img = img.reshape(1, 224, 224, 3)
-	img = img.astype('float32')
-	img = img - [123.68, 116.779, 103.939]
-	return img
-
-def score(path):
-	img = load_image(path)
-	result = model.predict(img)
-	probs = result[0]
-	classprobs = zip(metadata["classes"],probs)
-	return sorted(classprobs,key=lambda x:x[1],reverse=True)[:3]
+from fonts.tk_ttf import ButtonWithFont, TTF
+from imgclassifier.score import score
 
 class Window(Frame):
 
 	def __init__(self, master=None):
 		Frame.__init__(self, master)
+		self.font = TTF(16)
 		self.master = master
 		self.init_window()
 		self.filename = ""
@@ -52,14 +33,10 @@ class Window(Frame):
 	def init_window(self):
 		self.master.title("SimpleDL Image Classifier")
 		self.pack(fill=BOTH, expand=1)
-		menu = Menu(self.master)
-		self.master.config(menu=menu)
-		file = Menu(menu)
-		file.add_command(label="Load Img", command=self.load_img)
-		file.add_command(label="Exit", command=self.client_exit)
+		loadButton = ButtonWithFont(self, text="Load Image", font=self.font, command=self.load_img)
+		loadButton.pack()
 
-		menu.add_cascade(label="File", menu=file)
-		scoreButton = Button(self, text="Score",command=self.score)
+		scoreButton = ButtonWithFont(self, text="Score",font=self.font,command=self.score)
 		scoreButton.pack()
 
 	def load_img(self):
