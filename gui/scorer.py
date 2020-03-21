@@ -52,10 +52,14 @@ class Window(Frame):
 		self.updateButtonStatus()
 
 	def loadImage(self):
-		self.image_filename = filedialog.askopenfilename(initialdir=".", title="Select file",
-												   filetypes=(("jpeg files", "*.jpeg"), ("all files", "*.*")))
+		self.image_filename = filedialog.askopenfilename(initialdir=".", title="Select Image File", filetypes=(
+			("image files", ".jpg .jpeg .png .gif"), ("all files", "*.*")))
 		load = Image.open(self.image_filename)
-		render = ImageTk.PhotoImage(load)
+		w = 300
+		wfrac = (w / float(load.size[0]))
+		h = int((float(load.size[1]) * wfrac))
+		load2 = load.resize((w, h), Image.ANTIALIAS)
+		render = ImageTk.PhotoImage(load2)
 		if self.img:
 			self.img.pack_forget()
 			self.img = None
