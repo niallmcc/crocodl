@@ -12,28 +12,31 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import json
-
 from tensorflow.keras.preprocessing.image import load_img
 from tensorflow.keras.preprocessing.image import img_to_array
 from tensorflow.keras.models import load_model
+from utils.h5utils import read_metadata
 
-model = load_model('model.h5')
-metadata = json.loads(open('model.json').read())
+class Score(object):
 
-def load_image(filename):
-	img = load_img(filename, target_size=(224, 224))
-	img = img_to_array(img)
-	img = img.reshape(1, 224, 224, 3)
-	img = img.astype('float32')
-	img = img - [123.68, 116.779, 103.939]
-	return img
+	def __init__(self,modelpath):
+		self.model = load_model(modelpath)
+		self.metadata = read_metadata(modelpath)
 
-def score(path):
-	img = load_image(path)
-	result = model.predict(img)
-	probs = result[0]
-	classprobs = zip(metadata["classes"],probs)
-	return sorted(classprobs,key=lambda x:x[1],reverse=True)[:3]
+	@staticmethod
+	def load_image(filename):
+		img = load_img(filename, target_size=(224, 224))
+		img = img_to_array(img)
+		img = img.reshape(1, 224, 224, 3)
+		img = img.astype('float32')
+		img = img - [123.68, 116.779, 103.939]
+		return img
+
+	def score(self,imgpath):
+		img = Score.load_image(imgpath)
+		result = self.model.predict(img)
+		probs = result[0]
+		classprobs = zip(self.metadata["classes"],probs)
+		return sorted(classprobs,key=lambda x:x[1],reverse=True)[:3]
 
 

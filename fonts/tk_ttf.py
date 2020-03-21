@@ -32,8 +32,10 @@ class ButtonWithFont(Button):
         image = Image.new("RGBA", (w+2*margin,h+2*margin), color=(0, 0, 0, 0))
         draw = ImageDraw.Draw(image)
         draw.text((margin, margin), text, font=font, fill=colour)
+
         self._photoimage = ImageTk.PhotoImage(image)
         Button.__init__(self, root, image=self._photoimage, **kwargs)
+
 
 class LabelWithFont(Label):
 

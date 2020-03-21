@@ -14,7 +14,7 @@
 
 import os
 
-def check_data_folder(folder):
+def check_data_dir(folder):
 	subfolders = os.listdir(folder)
 	train_ok = False
 	test_ok = False
@@ -51,3 +51,4 @@ def check_data_folder(folder):
 				summary_text += ","
 		summary_text += " ) "
 	return (summary_text,[])
+

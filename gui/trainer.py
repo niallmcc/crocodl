@@ -23,6 +23,7 @@ from fonts.tk_ttf import LabelWithFont, ButtonWithFont, TTF
 
 def _create_circle(self, x, y, r, **kwargs):
     return self.create_oval(x-r, y-r, x+r, y+r, **kwargs)
+
 Canvas.create_circle = _create_circle
 
 class TrainingThread(threading.Thread):
@@ -33,10 +34,14 @@ class TrainingThread(threading.Thread):
         self.updateStats = updateStats
         self.epochs=epochs
         self.onCompletion=onCompletion
+        from imgclassifier.train import Train
+        self.train = Train()
 
     def run(self):
-        from imgclassifier.train import train
-        train(self.foldername,self.updateStats,epochs=self.epochs,completion_callback=self.onCompletion)
+        self.train.train(self.foldername,self.updateStats,epochs=self.epochs,completion_callback=self.onCompletion)
+
+    def save(self,folder):
+        self.train.save_model(folder)
 
 class SettingsDialog(object):
 
@@ -70,57 +75,88 @@ class Window(Frame):
         Frame.__init__(self, master)
         self.font = TTF(16)
         self.master = master
-        self.foldername = ""
+        self.model_path = "./model.h5"
         self.val_accs = []
         self.settings = { NR_EPOCHS:5 }
-        self.inputlabel = None
+
         self.chartm = 25
-        self.labelcanvas_width = 100
+        self.label_canvas_width = 100
         self.chart_width = 200
         self.chart_height = 100
         self.stats = {}
 
+        self.data_dir = ""
+        self.training = False
+        self.trained = False
+        self.error_message = ""
+
         self.canvas=None
-        self.epochlabel = None
+        self.epoch_label = None
 
         self.master.title("Train SimpleDL Image Classifier")
 
-
         crow = 0
-        loadButton = ButtonWithFont(self.master, text="Load Data...",font=self.font,command=self.load_data)
-        loadButton.grid(row=crow,column=0)
-        self.inputlabel = LabelWithFont(self.master, text="No data selected", fg="red")
-        self.inputlabel.grid(row=crow,column=1)
+        self.load_button = ButtonWithFont(self.master, text="Load Data...",font=self.font,command=self.loadData)
+        self.load_button.grid(row=crow,column=0,sticky=E)
+        self.input_label = LabelWithFont(self.master, text="No data selected", fg="red")
+        self.input_label.grid(row=crow,column=1,sticky=W)
         crow += 1
-        settingsButton = ButtonWithFont(self.master, text="Training Settings...", font=self.font, command=self.open_settings)
-        settingsButton.grid(row=crow, column=0)
+        self.settings_button = ButtonWithFont(self.master, text="Training Settings...", font=self.font, command=self.openSettings)
+        self.settings_button.grid(row=crow, column=0,sticky=E)
         crow += 1
-        trainButton = ButtonWithFont(self.master, text="Train Model",font=self.font,command=self.train)
-        trainButton.grid(row=crow,column=0)
-        self.statuslabel = LabelWithFont(self.master, text="", font=self.font)
-        self.statuslabel.grid(row=crow, column=1)
+        self.train_button = ButtonWithFont(self.master, text="Train Model",font=self.font,command=self.doTrain,state="disabled")
+        self.train_button.grid(row=crow,column=0,sticky=E)
+        self.status_label = LabelWithFont(self.master,text="", font=self.font)
+        self.status_label.grid(row=crow, column=1, sticky=W)
         self.status_row = crow
         crow += 1
         self.chart_row = crow
         self.drawChart()
+        crow += 2
+        model_path_button = ButtonWithFont(self.master, text="Model Path",font=self.font,command=self.chooseModelPath)
+        model_path_button.grid(row=crow,column=0,sticky=E)
 
-    def setStatus(self,text,col="black"):
-        self.statuslabel.grid_forget()
-        self.statuslabel = LabelWithFont(self.master, text=text, font=self.font, colour=col)
-        self.statuslabel.grid(row=self.status_row, column=1)
+        self.model_path_label = LabelWithFont(self.master, text=self.model_path)
+        self.model_path_label.grid(row=crow,column=1,sticky=W)
+        self.model_path_row = crow
+
+        crow += 1
+        self.save_button = ButtonWithFont(self.master, text="Save Model",font=self.font,command=self.saveModel,state="disabled")
+        self.save_button.grid(row=crow,column=0,sticky=E)
+
+    def showStatus(self):
+        col = "black"
+        if self.data_dir:
+            self.train_button.configure(state="normal")
+            text = "Ready to Train"
+            self.train_button.configure(state="normal")
+        if self.trained:
+            self.save_button.configure(state="normal")
+            text = "Training Complete"
+        else:
+            self.save_button.configure(state="disabled")
+        if self.training:
+            self.train_button.configure(state="disabled")
+            text = "Training"
+        if self.error_message:
+            col = "red"
+            text = self.error_message
+        self.status_label.grid_forget()
+        self.status_label = LabelWithFont(self.master, text=text, font=self.font, colour=col)
+        self.status_label.grid(row=self.status_row, column=1)
 
     def drawChart(self):
 
         if self.canvas:
             self.canvas.grid_forget()
 
-        self.labelcanvas = Canvas(self.master, width=self.labelcanvas_width, height=self.chart_height + 2 * self.chartm)
-        self.labelcanvas.grid(row=self.chart_row, column=0)
+        self.label_canvas = Canvas(self.master, width=self.label_canvas_width, height=self.chart_height + 2 * self.chartm)
+        self.label_canvas.grid(row=self.chart_row, column=0)
 
-        self.labelcanvas.create_text(self.labelcanvas_width/2,self.chartm+self.chart_height/2-30,text="train accuracy", fill="red")
-        self.labelcanvas_trainaccuracy_id = None
-        self.labelcanvas.create_text(self.labelcanvas_width/2, self.chartm + self.chart_height/2+10, text="test accuracy", fill="blue")
-        self.labelcanvas_testaccuracy_id = None
+        self.label_canvas.create_text(self.label_canvas_width/2,self.chartm+self.chart_height/2-30,text="train accuracy", fill="red")
+        self.label_canvas_trainaccuracy_id = None
+        self.label_canvas.create_text(self.label_canvas_width/2, self.chartm + self.chart_height/2+10, text="test accuracy", fill="blue")
+        self.label_canvas_testaccuracy_id = None
         self.canvas = Canvas(self.master, width=self.chart_width + 2 * self.chartm,
                              height=self.chart_height + 2 * self.chartm)
         self.canvas.grid(row=self.chart_row, column=1)
@@ -134,21 +170,20 @@ class Window(Frame):
                                 self.chartm + self.chart_height)
         self.canvas.create_line(self.chartm, self.chartm, self.chartm, self.chartm + self.chart_height)
 
-        if self.epochlabel:
-            self.epochlabel.grid_forget()
-        self.epochlabel = LabelWithFont(self.master, text="epochs", font=self.font)
-        self.epochlabel.grid(row=self.chart_row+1, column=1)
+        if self.epoch_label:
+            self.epoch_label.grid_forget()
+        self.epoch_label = LabelWithFont(self.master, text="epochs", font=self.font)
+        self.epoch_label.grid(row=self.chart_row+1, column=1)
 
     def updateStat(self,name,val):
         if name == "acc":
-            if self.labelcanvas_trainaccuracy_id:
-                self.labelcanvas.delete(self.labelcanvas_trainaccuracy_id)
-            self.labelcanvas_trainaccuracy_id = self.labelcanvas.create_text(self.labelcanvas_width/2,self.chartm+self.chart_height/2-10,text=val,fill="red")
+            if self.label_canvas_trainaccuracy_id:
+                self.label_canvas.delete(self.label_canvas_trainaccuracy_id)
+            self.label_canvas_trainaccuracy_id = self.label_canvas.create_text(self.label_canvas_width/2,self.chartm+self.chart_height/2-10,text=val,fill="red")
         elif name == "val_acc":
-            if self.labelcanvas_testaccuracy_id:
-                self.labelcanvas.delete(self.labelcanvas_testaccuracy_id)
-            self.labelcanvas_testaccuracy_id = self.labelcanvas.create_text(self.labelcanvas_width/2,self.chartm+self.chart_height/2+30,text=val, fill="blue")
-
+            if self.label_canvas_testaccuracy_id:
+                self.label_canvas.delete(self.label_canvas_testaccuracy_id)
+            self.label_canvas_testaccuracy_id = self.label_canvas.create_text(self.label_canvas_width/2,self.chartm+self.chart_height/2+30,text=val, fill="blue")
 
     def updateChart(self,epoch,stats):
         dx = self.chart_width / self.getNrEpochs()
@@ -167,20 +202,21 @@ class Window(Frame):
             self.canvas.create_circle(x1+self.chartm,y1+self.chartm,3,fill=col)
             self.stats[name] = v
 
-    def load_data(self):
-        self.inputlabel.grid_forget()
-        self.foldername = filedialog.askdirectory(initialdir=".", title="Select data folder",mustexist=True)
-        from imgclassifier.trainutils import check_data_folder
-        (summary, errors) = check_data_folder(self.foldername)
+    def loadData(self):
+        self.input_label.grid_forget()
+        self.data_dir = filedialog.askdirectory(initialdir=".", title="Select data folder",mustexist=True)
+        from imgclassifier.trainutils import check_data_dir
+        (summary, errors) = check_data_dir(self.data_dir)
 
         if len(errors) > 0:
-            self.foldername = None
-            self.inputlabel = LabelWithFont(self.master, text=",".join(errors), colour="red")
+            self.data_dir = None
+            self.input_label = LabelWithFont(self.master, text=",".join(errors), colour="red")
         else:
-            self.inputlabel = LabelWithFont(self.master, text="%s - %s"%(os.path.split(self.foldername)[1],summary), font=self.font)
-        self.inputlabel.grid(row=0,column=1)
+            self.input_label = LabelWithFont(self.master, text="%s - %s"%(os.path.split(self.data_dir)[1],summary), font=self.font)
+        self.input_label.grid(row=0,column=1)
+        self.showStatus()
 
-    def open_settings(self):
+    def openSettings(self):
         def update_settings(new_settings):
             self.settings = new_settings
         d = SettingsDialog(self.master,self.settings,update_settings)
@@ -189,13 +225,17 @@ class Window(Frame):
     def getNrEpochs(self):
         return self.settings[NR_EPOCHS]
 
-    def train(self):
+    def doTrain(self):
         self.stats = {}
         self.drawChart()
         self.updateStat("val_acc","-")
         self.updateStat("acc","-")
 
-        if not self.foldername:
+        self.error_message = ""
+        self.training = True
+        self.trained = False
+
+        if not self.data_dir:
             return
 
         def updateStats(epoch,stats):
@@ -204,19 +244,34 @@ class Window(Frame):
             self.updateChart(epoch,[("val_acc",val_acc,"blue"),("acc",acc,"red")])
 
         def completed():
-            self.setStatus("Training Complete")
+            self.setTrainingComplete()
 
-        tt = TrainingThread(self.foldername,updateStats,epochs=self.getNrEpochs(),onCompletion=completed)
-        tt.start()
-        self.setStatus("Training In Progress...")
+        self.tt = TrainingThread(self.data_dir,updateStats,epochs=self.getNrEpochs(),onCompletion=completed)
+        self.tt.start()
+        self.showStatus()
 
-    def client_exit(self):
-        exit()
+    def chooseModelPath(self):
+        self.model_path = filedialog.asksaveasfilename(initialfile=self.model_path, title="Select model file")
+        self.model_path_label.grid_forget()
+        self.model_path_label = LabelWithFont(self.master, text=self.model_path)
+        self.model_path_label.grid(row=self.model_path_row, column=1)
+
+    def saveModel(self):
+        if self.tt and self.model_path:
+            self.tt.save(self.model_path)
+
+    def setTrainingComplete(self):
+        self.training = False
+        self.trained = True
+        self.showStatus()
 
 
 
 if __name__ == "__main__":
     root = Tk()
     app = Window(root)
-    root.geometry("500x300")
+    root.geometry("500x500")
+    root.configure(bg='white')
+    root.tk_setPalette(background='white', foreground='black',
+                       activeBackground='yellow', activeForeground='black')
     root.mainloop()
