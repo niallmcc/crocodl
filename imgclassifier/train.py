@@ -69,9 +69,9 @@ class Train(object):
 		datagen.mean = [123.68, 116.779, 103.939]
 		# prepare iterator
 		train_it = datagen.flow_from_directory(self.training_folder,
-			class_mode='categorical', batch_size=32, target_size=(224, 224))
+			class_mode='categorical', batch_size=10, target_size=(224, 224))
 		test_it = datagen.flow_from_directory(self.testing_folder,
-			class_mode='categorical', batch_size=32, target_size=(224, 224))
+			class_mode='categorical', batch_size=10, target_size=(224, 224))
 
 		callbacks = []
 		if callback:
