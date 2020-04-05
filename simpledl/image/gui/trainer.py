@@ -357,7 +357,7 @@ class TrainerWindow(object):
             self.setTrainingComplete()
 
         self.rescaleChart()
-        tt = TrainingThread(self.data_dir,self.trainable,updateStats,epochs=self.nr_epochs,onCompletion=completed,settings=self.settings)
+        tt = TrainingThread(self.data_dir,self.trainable,updateStats,epochs=self.nr_epochs,onCompletion=completed,settings=self.train_settings)
         tt.start()
         self.showStatus()
 
