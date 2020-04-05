@@ -12,29 +12,32 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from tensorflow.keras.preprocessing.image import load_img
-from tensorflow.keras.preprocessing.image import img_to_array
+from PIL import Image
 from tensorflow.keras.models import load_model
-from utils.h5utils import read_metadata
+from simpledl.utils.h5utils import read_metadata
+from simpledl.image.model_factories.factory import Factory
 
-class Score(object):
+class Scorable(object):
 
-	def __init__(self,modelpath):
+	def __init__(self,model=None,metadata=None):
+		self.model = model
+		self.metadata = metadata
+		self.factory = None
+
+	def load(self,modelpath):
 		self.model = load_model(modelpath)
 		self.metadata = read_metadata(modelpath)
 
-	@staticmethod
-	def load_image(filename):
-		img = load_img(filename, target_size=(224, 224))
-		img = img_to_array(img)
-		img = img.reshape(1, 224, 224, 3)
-		img = img.astype('float32')
-		img = img - [123.68, 116.779, 103.939]
-		return img
+	def getClasses(self):
+		return self.metadata["classes"]
 
-	def score(self,imgpath):
-		img = Score.load_image(imgpath)
-		result = self.model.predict(img)
+	def score(self,image_path):
+		if self.factory == None:
+			self.factory = Factory.getFactory(self.metadata["architecture"])
+
+		img = Image.open(image_path)
+		img_arr = self.factory.prepare(img)
+		result = self.model.predict(img_arr)
 		probs = result[0]
 		classprobs = zip(self.metadata["classes"],probs)
 		return sorted(classprobs,key=lambda x:x[1],reverse=True)[:3]

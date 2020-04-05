@@ -23,13 +23,8 @@ def check_data_dir(folder):
 			train_ok = True
 		if subfolder == "test":
 			test_ok = True
-	errors = []
-	if not train_ok:
-		errors.append("train subfolder not found")
-	if not test_ok:
-		errors.append("test subfolder not found")
-	if len(errors):
-		return ({},errors)
+	if not train_ok or not test_ok:
+		return ([],"train and test subfolders not found")
 	summary = {}
 	for subfolder in ["train","test"]:
 		target_folder = os.path.join(folder,subfolder)
@@ -50,5 +45,21 @@ def check_data_dir(folder):
 			if subfolder == "train":
 				summary_text += ","
 		summary_text += " ) "
-	return (summary_text,[])
+	return (classes,"")
 
+def getConfusionMatrix(self,folder,scorable):
+	results = {} # actual => predicted => count
+	classes = scorable.getClasses()
+	for actual in classes:
+		results[actual] = {}
+		for predicted in classes:
+			results[actual][predicted] = 0
+
+	for actual in os.listdir(folder):
+		clazz_dir = os.path.join(folder,actual)
+		for file in os.listdir(clazz_dir):
+			image_path = os.path.join(clazz_dir,file)
+			scores = scorable.score(image_path)
+			predicted = scores[0][0]
+			results[actual][predicted] = results[actual][predicted]+1
+	return results
