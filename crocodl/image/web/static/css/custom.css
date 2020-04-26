@@ -1,0 +1,10 @@
+
+fieldset {
+    border-width: 2px;
+    margin: 10px;
+    padding: 10px;
+}
+
+iframe {
+    border-width: 0px;
+}

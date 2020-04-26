@@ -14,8 +14,8 @@
 
 from PIL import Image
 from tensorflow.keras.models import load_model
-from simpledl.utils.h5utils import read_metadata
-from simpledl.image.model_factories.factory import Factory
+from crocodl.utils.h5utils import read_metadata
+from crocodl.image.model_factories.factory import Factory
 
 class Scorable(object):
 
@@ -40,6 +40,9 @@ class Scorable(object):
 		result = self.model.predict(img_arr)
 		probs = result[0]
 		classprobs = zip(self.metadata["classes"],probs)
-		return sorted(classprobs,key=lambda x:x[1],reverse=True)[:3]
+		# get top 3 in descending rank
+		top3 = sorted(classprobs,key=lambda x:x[1],reverse=True)[:3]
+		# ensure results are JSON-serializable
+		return {"scores":list(map(lambda x:[x[0],float(x[1])],top3))}
 
 

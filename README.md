@@ -1,4 +1,4 @@
-# SimpleDL
+# crocoDL
 
 Simple and easy to use Deep Learning avoiding the need for a GPU or powerful hardware.  
 
@@ -28,6 +28,7 @@ wget https://github.com/lhelontra/tensorflow-on-arm/releases/download/v2.1.0/ten
 pip install --upgrade pip
 pip install tensorflow-2.1.0-cp37-none-linux_armv7l.whl
 pip install pillow
+pip install visigoth
 sudo apt-get update
 sudo apt-get install libatlas-base-dev
 sudo apt-get install libhdf5-dev
@@ -36,22 +37,22 @@ sudo apt-get install libhdf5-dev
 
 ## Train a Classification Model 
 
-This tool allows you to train a model to classify images.
+This service allows you to train a model to classify images.
 
-Open the GUI:
+Start a classification service and open its web page:
 
 ```
-python3 -m simpledl.image.gui.trainer
+python3 -m simpledl.image.web.train_service
 ```
 
-* First load the data folder.  Press the `Load Data` button and select the data folder.  
+* First, in the `Data Settings` section, load the zip file containing the image files to train with.  Press the `Browse` button and select the data zip.  
 
-The layout of the data folder groups sets of images into different classes.  
+The layout of the zip file groups sets of images into different classes.  
 
 In the example below these classes are named class1, class2 and class3.  You can specify as many classes as you wish and any class names can be used but at least two are required.
 
 ```
-<data folder>
+root
   train
      class1
         training image files for class1... 
@@ -70,35 +71,37 @@ In the example below these classes are named class1, class2 and class3.  You can
 
 The model that you train will try to learn how to classify an image into one of these classes (in the example above, class1, class2 or class3)
 
-For an example data folder layout, see the `data/dogs_vs_cats` folder.
+For an example data folder layout, see the `data/dogs_vs_cats.zip` file.
 
-* Next create a new empty model (`Create Model` button) or open an existing model (`Open Model` button) for continued training.  If opening an existing model it must have been trained/created on the same classes as the currently loaded data. 
+* Next, in the `Model Settings` section, create a new empty model (`Create Model` button) or open an existing model (`Open Model` button, then browse for the existing model file) for continued training.  
+If opening an existing model it must have been trained/created using this program on the same classes as the currently loaded data. 
+If creating a new model, you can configure the architecture to be used - which will influence the size of the model, its training speed and its effectiveness on a particular classification task.
 
-* You are now ready to (re)train the model.  Press the `Training Settings` button to configure the number of epochs (training steps) and batch size, then press the `Train` button to start training the model.
+* In the `Training Settings` section, if necessary configure the number of epochs (training steps) and batch size (the number of images grouped into in each training batch), then press the `Train` button to start training the model.
+
+* You are now ready to (re)train the model.  Press the `Start Training` button.
 
 On each epoch, the model will learn from the images in the train folder, and then its accuracy on the test folder will be assessed.
 
-When each epoch completes, the training graph will be updated with the model accuracy on the training and test data.  
+When each epoch completes, the training chart will be updated with the model accuracy on the training and test data.  
 
-* Once all the epochs have been run, press the `Save Model` button if you wish to save the changes to the model file - IMPORTANT changes to the model are not automatically saved.  
-
-* To test a trained model by scoring a selected image, press the `Score Model...` button.
+* Once all the epochs have been run, in the `Download Model` section click on the link if you wish to save the changes to the model file - IMPORTANT changes to the model are not automatically saved.  
 
 ## Classify an Image 
 
-This tool allows you to make predictions with a pre-trained classifier model.
+This service allows you to make predictions with a pre-trained image classification model.
 
-Open the GUI:
+Start a scoring service and open its web page:
 
 ```
-python3 -m simpledl.image.gui.scorer
+python3 -m simpledl.image.web.score_service
 ```
 
-* Press the `Load Model` button to select the model to be used to classify the image
+* In the `Model Settings` section select the model to be used to classify the image.  This model will have been downloaded from the classifier service (see above).
 
-* Press the `Load Image` button to select the image to be classified.
+* In the `Image` section, select an image to be scored.
 
-* Press the `Score` button to compute the scores.  The predicted classes will be listed in order of decreasing probability.
+* When a model and image have been selected, the predicted classes will be listed in order of decreasing score.
 
 ## Search for similar images
 

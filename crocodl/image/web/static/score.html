@@ -1,0 +1,61 @@
+<html>
+<head>
+    <link href="//fonts.googleapis.com/css?family=Raleway:400,300,600" rel="stylesheet" type="text/css">
+    <link rel="stylesheet" href="css/normalize.css">
+    <link rel="stylesheet" href="css/skeleton.css">
+    <link rel="stylesheet" href="css/custom.css">
+    <script type="text/javascript" src="js/runtime.js"></script>
+    <script type="text/javascript" src="js/score_runtime.js"></script>
+</head>
+
+<body onload="boot_runtime()">
+<div class="container">
+    <h1>Score an Image Classifier</h1>
+
+    <fieldset>
+        <legend>Model Settings</legend>
+        <div class="row">
+            <div class="one-half column">
+                <label for="upload_model_file">Choose Model File</label>
+                <input type="file" id="upload_model_file"/>
+            </div>
+            <div class="one-half column">
+                <progress id="upload_model_progress" min="0" max="100" value="0" style="display:none;">0% complete
+                </progress>
+            </div>
+        </div>
+        <div class="row">
+            <div id="model_info">No model defined</div>
+        </div>
+    </fieldset>
+
+    <fieldset>
+        <legend>Image</legend>
+        <div class="row">
+            <div class="one-half column">
+                <label for="upload_image_file">Choose Image File</label>
+                <input type="file" id="upload_image_file"/>
+                <div>
+                    <img width="256" id="image"/>
+                </div>
+            </div>
+            <div class="one-half column">
+                <progress id="upload_image_progress" min="0" max="100" value="0" style="display:none;">0% complete
+                </progress>
+                <table id="score_table">
+                    <thead>
+                        <tr>
+                            <th>Class</th>
+                            <th>Score</th>
+                        </tr>
+                    </thead>
+                    <tbody id="score_table_body">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </fieldset>
+</div>
+</body>
+</html>

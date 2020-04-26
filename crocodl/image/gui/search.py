@@ -17,11 +17,13 @@ from tkinter import filedialog, ttk
 import os.path
 from PIL import Image, ImageTk
 
-from simpledl.image.embedding.embedding_model import EmbeddingModel
-from simpledl.image.model_factories.factory import Factory
-from simpledl.image.utils.image_utils import ImageUtils
+from crocodl.image.embedding.embedding_model import EmbeddingModel
+from crocodl.image.model_factories.factory import Factory
+from crocodl.image.utils.image_utils import ImageUtils
 import threading
-from simpledl.utils.gui.tframe import TFrame
+from crocodl.utils.gui.tframe import TFrame
+
+from crocodl.image.model_factories.capability import Capability
 
 ARCHITECTURE = "architecture"
 PATH = "path"
@@ -48,7 +50,7 @@ class SettingsDialog(object):
         self.database_path = ""
 
         crow = 0
-        architectures = Factory.getAvailableArchitectures()
+        architectures = Factory.getAvailableArchitectures(Capability.feature_extraction)
         self.architecture= architectures[0]
 
         self.frame.addLabel("arch_label", text="Architecture",row=crow, col=0)

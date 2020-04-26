@@ -15,7 +15,7 @@
 import tkinter as tk
 from tkinter import ttk
 from PIL import Image, ImageTk
-from simpledl.utils.gui.chart import Chart
+from crocodl.utils.gui.chart import Chart
 
 class TFrame(ttk.Frame):
 

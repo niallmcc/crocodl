@@ -12,19 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import h5py
-import json
+class BaseFactory:
 
-def add_metadata(path,metadata):
-	f = h5py.File(path, "r+")
-	dt = h5py.string_dtype()
-	dset = f.create_dataset("simpledl",shape=(0,),dtype=dt)
-	dset.attrs["json"] = json.dumps(metadata)
-	f.close()
+    def __init__(self, architecture_name):
+        self.architecture_name = architecture_name
 
-def read_metadata(path):
-	f = h5py.File(path, "r")
-	dset = f["simpledl"]
-	s = dset.attrs["json"]
-	return json.loads(s)
+    def getArchitectureName(self):
+        return self.architecture_name
+
+    def createClassifier(self, training_classes=2, settings={}):
+        raise NotImplementedError("Classifier")
+
+    def createEmbeddingModel(self):
+        raise NotImplementedError("Embedding / Feature Extraction")
 

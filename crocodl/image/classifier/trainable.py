@@ -14,22 +14,30 @@
 
 
 import os
-from simpledl.image.model_factories.factory import Factory
+from crocodl.image.model_factories.factory import Factory
 from tensorflow.keras.callbacks import Callback
 from tensorflow.keras.models import load_model
-from simpledl.utils.h5utils import add_metadata, read_metadata
-from simpledl.image.classifier.scorable import Scorable
+from crocodl.utils.h5utils import add_metadata, read_metadata
+from crocodl.image.classifier.scorable import Scorable
+
+from crocodl.image.model_factories.mobilenetv2_factory import MobileNetV2Factory
 
 class XCallback(Callback):
 
-	def __init__(self, trainable, callback):
+	def __init__(self, trainable, epoch_callback, batch_callback=None):
 		super(XCallback, self).__init__()
 		self.trainable = trainable
-		self.cb = callback
+		self.epoch_callback = epoch_callback
+		self.batch_callback = batch_callback
 
 	def on_epoch_end(self, epoch, logs=None):
 		self.trainable.addEpoch(logs)
-		self.cb(epoch, logs)
+		if self.epoch_callback:
+			self.epoch_callback(epoch, logs)
+
+	def on_batch_end(self, epoch, logs=None):
+		if self.batch_callback:
+			self.batch_callback(epoch, logs)
 
 class Trainable(object):
 
@@ -37,20 +45,22 @@ class Trainable(object):
 	DEFAULT_BATCH_SIZE = 16
 
 	ARCHITECTURE = "architecture"
-	DEFAULT_ARCHITECTURE = "MobileNetV2"
+	DEFAULT_ARCHITECTURE = MobileNetV2Factory.MNET_160
 
 	def __init__(self):
 		self.factory = None
 		self.model = None
 		self.classes = []
 		self.epochs = []
+		self.path = ""
 
-	def createEmpty(self,classes,settings):
+	def createEmpty(self,path,classes,settings):
 		architecture = settings[Trainable.ARCHITECTURE]
 		self.factory = Factory.getFactory(architecture)
 		self.model = self.factory.createTransferModel(training_classes=len(classes),settings=settings)
 		self.classes = classes
 		self.epochs = []
+		self.path = path
 
 	def open(self,path):
 		self.model = load_model(path)
@@ -58,6 +68,10 @@ class Trainable(object):
 		self.factory = Factory.getFactory(metadata["architecture"])
 		self.classes = metadata["classes"]
 		self.epochs = metadata["epochs"]
+		self.path = path
+
+	def getFactory(self):
+		return self.factory
 
 	def getClasses(self):
 		return self.classes
@@ -68,7 +82,7 @@ class Trainable(object):
 	def isTrained(self):
 		return len(self.epochs) > 0
 
-	def train(self,foldername,epoch_callback=None,epochs=5,completion_callback=None,settings={}):
+	def train(self,foldername,epoch_callback=None,epochs=5,batchSize=16,completion_callback=None,batch_callback=None):
 		self.training_folder = os.path.join(foldername,"train")
 		self.testing_folder = os.path.join(foldername,"test")
 
@@ -76,13 +90,12 @@ class Trainable(object):
 		if training_classes != self.classes:
 			raise Exception("classes mismatch, unable to train")
 
-		batch_size = settings.get(Trainable.BATCH_SIZE,Trainable.DEFAULT_BATCH_SIZE)
-		train_it = self.factory.getInputIterator(self.training_folder,batch_size=batch_size)
-		test_it = self.factory.getInputIterator(self.testing_folder,batch_size=batch_size)
+		train_it = self.factory.getInputIterator(self.training_folder,batch_size=batchSize)
+		test_it = self.factory.getInputIterator(self.testing_folder,batch_size=batchSize)
 
 		callbacks = []
-		if epoch_callback:
-			callbacks.append(XCallback(self,epoch_callback))
+		if epoch_callback or batch_callback:
+			callbacks.append(XCallback(self,epoch_callback,batch_callback))
 
 		self.model.fit(train_it, validation_data=test_it, epochs=epochs, verbose=1, callbacks=callbacks)
 		if completion_callback:
@@ -98,12 +111,17 @@ class Trainable(object):
 
 	def getMetadata(self):
 		return {
-			"architecture": self.factory.getArchitectureName(),
+			"architecture": self.getFactory().getArchitectureName(),
 			"classes": self.classes,
 			"epochs": self.epochs
 		}
 
-	def saveModel(self,path):
+	def getPath(self):
+		return self.path
+
+	def saveModel(self,path=None):
+		if not path:
+			path = self.path
 		self.model.save(path)
 		add_metadata(path,self.getMetadata())
 

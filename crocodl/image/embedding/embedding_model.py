@@ -1,13 +1,25 @@
-# https://machinelearningmastery.com/how-to-develop-a-convolutional-neural-network-to-classify-photos-of-dogs-and-cats/
-# pip3 install tensorflow keras pillow
+# Copyright 2020 Niall McCarroll
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 import os
 import os.path
 from PIL import Image
-import json
 
-from simpledl.image.embedding.image_store import ImageStore
-from simpledl.image.model_factories.factory import Factory
+from crocodl.image.embedding.image_store import ImageStore
+from crocodl.image.model_factories.factory import Factory
+
+# ref: https://machinelearningmastery.com/how-to-develop-a-convolutional-neural-network-to-classify-photos-of-dogs-and-cats/
 
 class EmbeddingModel(object):
 
@@ -58,8 +70,7 @@ class EmbeddingModel(object):
 					self.imagestore.addEmbedding(filepath, scores, image)
 				return 1
 			except Exception as ex:
-				raise ex
-				# return 0
+				return 0
 
 		counter = 0
 		import glob

@@ -15,22 +15,27 @@
 from tensorflow.keras.applications.vgg16 import VGG16, preprocess_input
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Flatten, Dense
-from simpledl.image.utils.image_utils import ImageUtils
 from tensorflow.keras.preprocessing.image import img_to_array
 from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 
+from crocodl.image.utils.image_utils import ImageUtils
+from crocodl.image.model_factories.capability import Capability
+from crocodl.image.model_factories.base_factory import BaseFactory
 
-class VGG16Factory(object):
+class VGG16Factory(BaseFactory):
 
-    RGB_MEANS = [123.68, 116.779, 103.939]
-
-    def __init__(self):
+    def __init__(self,architecture_name):
+        super().__init__(architecture_name)
         pass
 
     @staticmethod
-    def getArchitectureName():
-        return "VGG16"
+    def getArchitectureNames():
+        return ["VGG16"]
+
+    @staticmethod
+    def getCapabilities():
+        return { Capability.feature_extraction, Capability.classification }
 
     def load(self,path):
         return load_model(path)
