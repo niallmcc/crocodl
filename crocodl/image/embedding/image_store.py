@@ -34,6 +34,12 @@ class ImageStore(object):
 		cursor.execute("select count(*) from embeddings")
 		return cursor.fetchone()[0]
 
+	def clear(self):
+		db = sqlite3.connect(self.path)
+		cursor = db.cursor()
+		cursor.execute("delete from embeddings")
+		db.commit()
+
 	def setArchitecture(self,architecture):
 		db = sqlite3.connect(self.path)
 		cursor = db.cursor()

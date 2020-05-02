@@ -18,6 +18,7 @@ from PIL import Image
 
 from crocodl.image.embedding.image_store import ImageStore
 from crocodl.image.model_factories.factory import Factory
+from crocodl.image.utils.image_utils import ImageUtils
 
 # ref: https://machinelearningmastery.com/how-to-develop-a-convolutional-neural-network-to-classify-photos-of-dogs-and-cats/
 
@@ -26,14 +27,9 @@ class EmbeddingModel(object):
 	ARCHITECTURE="architecture"
 	DEFAULT_ARCHITECTURE="VGG16"
 
-	def __init__(self,path):
-		self.path = path
-		self.imagestore = None
+	def __init__(self,imagestore):
+		self.imagestore = imagestore
 		self.progress_cb = None
-		self.imagestore = ImageStore(self.path)
-		if not os.path.exists(self.path):
-			raise FileNotFoundError(self.path)
-		self.imagestore = ImageStore(self.path)
 
 	@staticmethod
 	def create(path,architecture):
@@ -41,9 +37,16 @@ class EmbeddingModel(object):
 			os.unlink(path)
 		imagestore = ImageStore(path)
 		imagestore.setArchitecture(architecture)
+		return EmbeddingModel(imagestore)
 
 	def getArchitecture(self):
 		return self.imagestore.getArchitecture()
+
+	def setArchitecture(self,architecture):
+		return self.imagestore.setArchitecture(architecture)
+
+	def clear(self):
+		self.imagestore.clear()
 
 	def __len__(self):
 		return len(self.imagestore)
@@ -61,23 +64,23 @@ class EmbeddingModel(object):
 		model = factory.createEmbeddingModel()
 		self.imagestore.open()
 
-		def process(filepath):
-			try:
-				image = Image.open(filepath)
-				image_data = factory.prepare(image)
-				if image_data is not None:
-					scores = factory.getEmbedding(model,image_data)
-					self.imagestore.addEmbedding(filepath, scores, image)
-				return 1
-			except Exception as ex:
-				return 0
+		def process(relpath,image):
+			image_data = factory.prepare(image)
+			if image_data is not None:
+				scores = factory.getEmbedding(model,image_data)
+				self.imagestore.addEmbedding(relpath, scores, image)
 
 		counter = 0
 		import glob
-		for filename in glob.iglob(folder + '/**', recursive=True):
-			if os.path.isfile(filename):
-				counter += process(filename)
-				if counter % 10 == 0:
-					self.progress_cb("Loaded " + str(counter) + " images")
-
+		for filepath in glob.iglob(folder + '/**', recursive=True):
+			if os.path.isfile(filepath):
+				try:
+					image = Image.open(filepath)
+					relpath = os.path.relpath(filepath, start=folder)
+					process(relpath,image)
+					counter += 1
+					if counter % 10 == 0:
+						self.progress_cb("Loaded " + str(counter) + " images",relpath,ImageUtils.ImageToDataUri(image,160))
+				except Exception as ex:
+					print(str(ex))
 		self.imagestore.close()

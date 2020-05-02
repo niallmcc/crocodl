@@ -13,10 +13,15 @@
 # limitations under the License.
 
 import base64
+import os.path
 from io import BytesIO
 from PIL import Image
 
 class ImageUtils(object):
+
+    @staticmethod
+    def ImageToDataUri(image,max_w=160):
+        return 'data:image/jpeg;base64,'+ImageUtils.encodeThumbnail(image,max_w).decode("utf-8")
 
     @staticmethod
     def resizeImage(image,w):

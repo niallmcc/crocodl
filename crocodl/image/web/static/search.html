@@ -1,0 +1,92 @@
+<html>
+<head>
+    <link href="//fonts.googleapis.com/css?family=Raleway:400,300,600" rel="stylesheet" type="text/css">
+    <link rel="stylesheet" href="css/normalize.css">
+    <link rel="stylesheet" href="css/skeleton.css">
+    <link rel="stylesheet" href="css/custom.css">
+    <script type="text/javascript" src="js/runtime.js"></script>
+    <script type="text/javascript" src="js/search_runtime.js"></script>
+</head>
+
+<body onload="boot_runtime()">
+<div class="container">
+    <h1>Search for similar images</h1>
+
+    <fieldset>
+        <legend>Database Settings</legend>
+        <div class="row">
+            <div class="one-half column">
+                <input type="button" id="clear_btn" value="Clear Database"/>
+            </div>
+            <div class="one-half column">
+                <fieldset>
+                    <legend>Configure Empty Database</legend>
+                        <label for="upload_images_file">Architecture
+                        <select id="architectures">
+                        </select>
+                            </label>
+                </fieldset>
+            </div>
+        </div>
+        <div class="row">
+            <div id="database_info">No database defined</div>
+        </div>
+    </fieldset>
+
+    <fieldset>
+        <legend>Add Images to Database</legend>
+        <div class="row">
+            <div class="one-half column">
+                <label for="upload_images_file">Choose Image Files</label>
+                <input type="file" id="upload_images_file"/>
+            </div>
+            <div class="one-half column">
+                <progress id="upload_images_progress" min="0" max="100" value="0" style="display:none;">0% complete
+                </progress>
+                <div id="train_monitor">
+                    <img style="display:block;object-fit:scale-down;width:160px;height:160px;" id="train_image"/>
+                    <div id="train_file_name">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div id="train_info"></div>
+        </div>
+    </fieldset>
+
+    <fieldset>
+        <legend>Search Database for Similar Images</legend>
+        <div class="row">
+            <div class="one-half column">
+                <label for="upload_image_file">Choose Image File</label>
+                <input type="file" id="upload_image_file"/>
+                <div>
+                    <img width="256" id="image"/>
+                </div>
+            </div>
+            <div class="one-half column">
+                <progress id="upload_image_progress" min="0" max="100" value="0" style="display:none;">0% complete
+                </progress>
+                <input id="search_btn" type="button" value="Search"/>
+                <table id="search_table">
+                    <thead>
+                        <tr>
+                            <th>Filename</th>
+                            <th>Similarity</th>
+                            <th>Thumbnail</th>
+                        </tr>
+                    </thead>
+                    <tbody id="search_table_body">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="row">
+            <div id="search_info"></div>
+        </div>
+
+    </fieldset>
+</div>
+</body>
+</html>
