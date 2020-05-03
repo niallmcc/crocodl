@@ -41,6 +41,9 @@ training = False
 searching = False
 train_progress = ""
 search_progress = ""
+search_image_url = ""
+imagestore_path = ""
+imagestore_url = ""
 
 latest_train_path = ""
 latest_train_image = ""
@@ -115,6 +118,8 @@ class App(object):
     def add_images(path):
         global training
         if not training:
+            global train_progress
+            train_progress = "Adding images"
             upload_dir = os.path.join(app.config["WORKSPACE_DIR"], "upload")
             if os.path.isdir(upload_dir):
                 shutil.rmtree(upload_dir)
@@ -143,11 +148,11 @@ class App(object):
             shutil.rmtree(image_dir)
         os.makedirs(image_dir)
 
-        global image_path
+        global image_path, search_image_url
         image_path = os.path.join(image_dir, path)
         open(image_path, "wb").write(request.data)
-
-        return jsonify("/score_image/"+path)
+        search_image_url = "/score_image/"+path
+        return jsonify({})
 
     @staticmethod
     @app.route('/score_image/<path:path>', methods=['GET'])
@@ -156,8 +161,17 @@ class App(object):
         return send_from_directory(image_dir, path)
 
     @staticmethod
+    @app.route('/database/<path:path>', methods=['GET'])
+    def send_database(path):
+        imagestore_dir = os.path.split(imagestore_path)[0]
+        imagestore_filename = os.path.split(imagestore_path)[1]
+        return send_from_directory(imagestore_dir, imagestore_filename)
+
+    @staticmethod
     @app.route('/search_image', methods=['POST'])
     def search_image():
+        global search_progress
+        search_progress = "Starting search..."
         global searching
         if not searching:
             st = SearchThread(image_path)
@@ -165,43 +179,88 @@ class App(object):
         return jsonify({})
 
     @staticmethod
-    @app.route('/clear_database', methods=['POST'])
-    def clear_database():
+    @app.route('/upload_database/<path:path>', methods=['POST'])
+    def upload_database(path):
+        parent_dir = os.path.join(app.config["WORKSPACE_DIR"], "image_store")
+        if os.path.isdir(parent_dir):
+            shutil.rmtree(parent_dir)
+        os.makedirs(parent_dir)
+
+        global imagestore_path
+        imagestore_path = os.path.join(parent_dir, path)
+        open(imagestore_path, "wb").write(request.data)
+
         global embedding_model
-        embedding_model.clear()
+        imagestore = ImageStore(imagestore_path)
+        embedding_model = EmbeddingModel(imagestore)
+
         global database_info
         database_info = "%s (%d images)" % (embedding_model.getArchitecture(), len(embedding_model))
+
+        global imagestore_url
+        imagestore_url = "database/"+path
         return jsonify({})
 
     @staticmethod
-    @app.route('/configure_database', methods=['POST'])
-    def configure_database():
+    @app.route('/create_database', methods=['POST'])
+    def create_database():
         settings = request.json
-        architecture = settings["architecture"];
+        architecture = settings["architecture"]
+
+
         global embedding_model
-        embedding_model.clear()
-        embedding_model.setArchitecture(architecture)
+        parent_dir = os.path.join(app.config["WORKSPACE_DIR"], "image_store")
+        if os.path.isdir(parent_dir):
+            shutil.rmtree(parent_dir)
+        os.makedirs(parent_dir)
+
+        global imagestore_path
+        imagestore_path = os.path.join(parent_dir, "imagesearch.db")
+
+        image_store = ImageStore(imagestore_path)
+        image_store.setArchitecture(architecture)
+        embedding_model = EmbeddingModel(image_store)
+
         global database_info
         database_info = "%s (%d images)" % (embedding_model.getArchitecture(), len(embedding_model))
+
+        global imagestore_url
+        imagestore_url = "database/imagesearch.db"
         return jsonify({})
 
     @staticmethod
     @app.route('/status', methods=['GET'])
     def status():
-        global searching, training, search_progress, train_progress, search_results
+        global embedding_model, searching, training, search_progress, train_progress, search_results, image_path
+        database_ready  = False
+        search_ready = False
+        if embedding_model != None:
+            database_ready = True
+            if not embedding_model.isEmpty():
+                search_ready = True
+
         status = {
             "searching":searching,
             "training":training,
-            "database_info":database_info
+            "database_info":database_info,
+            "image_uploaded": (image_path != ""),
+            "database_ready": database_ready,
+            "search_ready": search_ready
         }
-        if searching:
-            status["search_progress"] = search_progress
+        status["search_progress"] = search_progress
+        status["train_progress"] = train_progress
         if training:
-            status["train_progress"] = train_progress
             status["train_image"] = latest_train_image
             status["train_file_name"] = latest_train_path
         if search_results:
             status["search_results"] = search_results
+
+        global search_image_url
+        if search_image_url:
+            status["search_image_url"] = search_image_url
+
+        global imagestore_url
+        status["database_url"] = imagestore_url
         return jsonify(status)
 
     ####################################################################################################################
@@ -251,7 +310,6 @@ if __name__ == '__main__':
     from crocodl.utils.web.browser import Browser
 
     parser = Browser.getArgParser()
-    parser.add_argument("--database",type=str,help="specify search database path",default="search.db")
     args = parser.parse_args()
     # start the service and try to open a new browser tab if required
     host = args.host
@@ -259,11 +317,6 @@ if __name__ == '__main__':
     if not args.noclient:
         Browser("http://%s:%d" % (host, port)).launch()
 
-    image_store = ImageStore(args.database)
-    if image_store.getArchitecture() is None:
-        image_store.setArchitecture("MobileNetV2 160x160")
-    embedding_model = EmbeddingModel(image_store)
-    database_info = "%s (%d images)" % (embedding_model.getArchitecture(), len(embedding_model))
     app.run(host=host, port=port)
 
 

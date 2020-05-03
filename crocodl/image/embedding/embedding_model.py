@@ -30,6 +30,7 @@ class EmbeddingModel(object):
 	def __init__(self,imagestore):
 		self.imagestore = imagestore
 		self.progress_cb = None
+		self.size = len(self.imagestore)
 
 	@staticmethod
 	def create(path,architecture):
@@ -47,9 +48,13 @@ class EmbeddingModel(object):
 
 	def clear(self):
 		self.imagestore.clear()
+		self.size = 0
+
+	def isEmpty(self):
+		return self.size == 0
 
 	def __len__(self):
-		return len(self.imagestore)
+		return self.size
 
 	def search(self,image, progress_cb=None):
 		factory = Factory.getFactory(self.imagestore.getArchitecture())
@@ -84,3 +89,4 @@ class EmbeddingModel(object):
 				except Exception as ex:
 					print(str(ex))
 		self.imagestore.close()
+		self.size = len(self.imagestore)

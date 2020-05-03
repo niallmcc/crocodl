@@ -99,6 +99,5 @@ class MobileNetV2Factory(BaseFactory):
 
     def getEmbedding(self,embedding_model,prepared_image):
         sc = self.score(embedding_model,prepared_image)
-        print(json.dumps(sc))
         return sc
 

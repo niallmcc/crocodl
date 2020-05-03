@@ -105,20 +105,20 @@ python3 -m simpledl.image.web.score_service
 
 ## Search for similar images
 
-This tool allows you to search through a database of images to try to find those considered similar by the model to a candidate image.
+This tool allows you to create and search through a database of images to try to find those considered similar by the model to a candidate image.
 
-Open the GUI:
+Start a search service and open its web page:
 
 ```
-python3 -m simpledl.image.gui.search
+python3 -m simpledl.image.web.search_service
 ```
 
-* First use `Create Database` or `Open Database` to pick the database to use.
+* First use `Create Database` or `Upload Database` in the `Database` section to pick the database to use.
 
-* To add images to a database, use `Select Images Folder` to specify a folder.  Then press `Load Images` to load all images located under this folder into the database.
+* To add images to a database, use `Choose Zip Containing Image Files` to specify a zip file containing images.  Then press `Load Images` to load all images located under this folder into the database.
 
-The database will store a thumbnail of the image. 
+The database will store a thumbnail of the image along with an image embedding - a vector of numbers computed by a pre-trained model. 
 
-* To search the database for similar images, select the image file to search for using the `Load Search Image` button.  Then press the `Search` button.
+* To search the database for similar images, in the `Search Database for Similar Images` section, select the image file to search for using the `Load Search Image` button.  Then press the `Search` button.
 
 Thumbnails of the 3 images in the database deemed most similar will be displayed, ranked in order of decreasing similarity, along with a similarity score in the range 0.0 to 1.0.

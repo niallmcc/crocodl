@@ -10,26 +10,47 @@
 
 <body onload="boot_runtime()">
 <div class="container">
-    <h1>Search for similar images</h1>
+    <h1>Search for Similar Images</h1>
 
     <fieldset>
-        <legend>Database Settings</legend>
-        <div class="row">
+        <legend>Database</legend>
+         <div class="row">
             <div class="one-half column">
-                <input type="button" id="clear_btn" value="Clear Database"/>
+                <label for="create_database">
+                <input type="radio" id="create_database" name="database_radio" value="create_database" checked/>
+                    Create New Database
+                </label>
             </div>
             <div class="one-half column">
-                <fieldset>
-                    <legend>Configure Empty Database</legend>
-                        <label for="upload_images_file">Architecture
-                        <select id="architectures">
-                        </select>
-                            </label>
-                </fieldset>
+                <label for="architectures">
+                    Architecture:
+                    <select id="architectures">
+                    </select>
+                </label>
+                    <input type="button" id="create_database_button" value="Create"/>
             </div>
         </div>
         <div class="row">
-            <div id="database_info">No database defined</div>
+            <div class="one-half column">
+                <label for="upload_database">
+                    <input type="radio" id="upload_database" name="database_radio" value="upload_database"/>
+                    Upload Existing Database
+                </label>
+            </div>
+            <div class="one-half column">
+                <label for="upload_database_file">Choose File</label>
+                <input type="file" id="upload_database_file"/>
+                <progress id="upload_database_progress" min="0" max="100" value="0" style="display:none;">0% complete
+                </progress>
+            </div>
+        </div>
+        <div class="row">
+            <div class="one-half column">
+                <div id="database_info">No database defined</div>
+            </div>
+            <div class="one-half column">
+                <a id="database_link" href="">Download database</a>
+            </div>
         </div>
     </fieldset>
 
@@ -37,7 +58,7 @@
         <legend>Add Images to Database</legend>
         <div class="row">
             <div class="one-half column">
-                <label for="upload_images_file">Choose Image Files</label>
+                <label for="upload_images_file">Choose Zip Containing Image Files</label>
                 <input type="file" id="upload_images_file"/>
             </div>
             <div class="one-half column">

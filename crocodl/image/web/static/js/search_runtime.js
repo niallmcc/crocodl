@@ -16,10 +16,10 @@
 
 runtime = null;
 function boot_runtime() {
-    runtime = new ScoreRuntime();
+    runtime = new SearchRuntime();
 }
 
-class ScoreRuntime extends Runtime {
+class SearchRuntime extends Runtime {
 
     constructor() {
         super();
@@ -27,8 +27,10 @@ class ScoreRuntime extends Runtime {
 
         this.training = false;
         this.searching = false;
+        this.image_uploaded = false;
+        this.database_ready = false;
+        this.search_ready = false;
 
-        this.databaseInfo = $("database_info");
         this.trainInfo = $("train_info");
         this.trainInput = $("upload_images_file");
         this.trainImage = $("train_image");
@@ -40,10 +42,13 @@ class ScoreRuntime extends Runtime {
         this.searchButton = $("search_btn");
         this.searchInfo = $("search_info");
 
+        this.createDatabase = $("create_database");
+        this.uploadDatabase = $("upload_database");
+        this.databaseInput = $("upload_database_file");
+        this.databaseInfo = $("database_info");
+        this.databaseLink = $("database_link");
         this.architectures = $("architectures");
-        this.clearButton = $("clear_btn");
-
-        this.image_uploaded = false;
+        this.createDatabaseButton = $("create_database_button");
 
         this.trainInput.onchange = function() {
             that.setTrainInfo("Adding images...");
@@ -62,10 +67,20 @@ class ScoreRuntime extends Runtime {
             var files = that.imageInput.files;
             for (var i = 0; i < files.length; i++) {
                 var file = files[i];
-                that.upload(file, '/image_upload/', 'upload_image_progress',function(url) {
-                    that.image.setAttribute("src",url);
-                    that.image_uploaded = true;
+                that.upload(file, '/image_upload/', 'upload_image_progress',function(result) {
                     that.clearSearchResults();
+                    that.checkStatus();
+                });
+            }
+        }
+
+        this.databaseInput.onchange = function() {
+            var files = that.databaseInput.files;
+            that.setDatabaseInfo("Uploading database...");
+            for (var i = 0; i < files.length; i++) {
+                var file = files[i];
+                that.upload(file, '/upload_database/', 'upload_database_progress',function(result) {
+                    that.checkStatus();
                 });
             }
         }
@@ -74,8 +89,16 @@ class ScoreRuntime extends Runtime {
             that.search();
         }
 
-        this.clearButton.onclick = function() {
-            that.clearDatabase();
+        this.createDatabaseButton.onclick = function() {
+            that.doCreateDatabase();
+        }
+
+        this.createDatabase.onchange = function() {
+            that.refreshControls();
+        }
+
+        this.uploadDatabase.onchange = function() {
+            that.refreshControls();
         }
 
         this.architecture_names = [];
@@ -101,16 +124,12 @@ class ScoreRuntime extends Runtime {
             opt.appendChild(tn);
             this.architectures.appendChild(opt);
         }
-        var that = this;
-        this.architectures.onchange = function() {
-            that.configureDatabase();
-        }
     }
 
     search() {
         this.clearSearchResults();
-        this.setSearchInfo("Starting search...");
         if (!this.training && !this.searching) {
+            this.setSearchInfo("Starting search...");
             var that = this;
             this.searching = true;
             this.refreshControls();
@@ -130,47 +149,24 @@ class ScoreRuntime extends Runtime {
         }
     }
 
-    clearDatabase() {
-        if (!this.training && !this.searching) {
-            var that = this;
-            this.searching = true;
-            this.refreshControls();
-            fetch("/clear_database", {
-                method: 'POST',
-                cache: 'no-cache',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({})
-            }).then((response) => {
-                    return response.json();
-                })
-                .then((results) => {
-                    that.checkStatus();
-                });
-        }
-    }
-
-    configureDatabase() {
-        if (!this.training && !this.searching) {
-            var that = this;
-            this.searching = true;
-            this.refreshControls();
-            var architecture = this.architecture_names[this.architectures.selectedIndex];
-            fetch("/configure_database", {
-                method: 'POST',
-                cache: 'no-cache',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({"architecture":architecture})
-            }).then((response) => {
-                    return response.json();
-                })
-                .then((results) => {
-                    that.checkStatus();
-                });
-        }
+    doCreateDatabase() {
+        var that = this;
+        this.epoch = 0;
+        var architecture = this.architecture_names[this.architectures.selectedIndex];
+        this.setDatabaseInfo("Creating database...");
+        fetch("create_database", {
+            method: 'POST',
+            cache: 'no-cache',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({"architecture":architecture})
+        }).then((response) => {
+                return response.json();
+            })
+            .then((create_status) => {
+                that.checkStatus();
+            });
     }
 
     clearSearchResults() {
@@ -237,19 +233,17 @@ class ScoreRuntime extends Runtime {
     updateStatus(status) {
         this.training = status["training"];
         this.searching = status["searching"];
-        this.setDatabaseInfo(status["database_info"]);
+        this.image_uploaded = status["image_uploaded"];
+        this.database_ready = status["database_ready"];
+        this.search_ready = status["search_ready"];
 
-        var search_status = "";
-        if (this.searching) {
-            search_status = status["search_progress"];
-        }
+        this.setDatabaseInfo(status["database_info"]);
+        this.databaseLink.setAttribute("href",status["database_url"]);
+
+        var search_status = status["search_progress"];
         this.setSearchInfo(search_status);
 
-        var train_status = "";
-        if (this.training) {
-            train_status = status["train_progress"];
-        }
-
+        var train_status = status["train_progress"];
         var train_image = "";
         var train_file_name = "";
         if (this.training && status["train_image"] && status["train_file_name"]) {
@@ -262,15 +256,62 @@ class ScoreRuntime extends Runtime {
 
         this.setTrainInfo(train_status,train_image,train_file_name);
 
-
         if (status["search_results"]) {
             this.showSearchResults(status["search_results"]);
+        }
+
+        if (status["search_image_url"]) {
+            this.image.setAttribute("src",status["search_image_url"]);
         }
 
         this.refreshControls();
     }
 
     refreshControls() {
+        if (this.training || this.searching) {
+            /* database controls */
+            this.databaseInput.disabled = true;
+            this.createDatabase.disabled = true;
+            this.uploadDatabase.disabled = true;
+            this.createDatabaseButton.disabled = true;
+            this.architectures.disabled = true;
+
+            /* training controls */
+            this.trainInput.disabled = true;
+
+            /* search controls */
+            this.searchButton.setAttribute("class","");
+            this.searchButton.disabled = true;
+            this.imageInput.disabled = true;
+            this.databaseLink.setAttribute("style","display:none;");
+        } else {
+            /* database controls */
+            this.createDatabase.disabled = false;
+            this.uploadDatabase.disabled = false;
+            this.createDatabaseButton.disabled = !this.createDatabase.checked;
+            this.architectures.disabled = !this.createDatabase.checked;
+            this.databaseInput.disabled = !this.uploadDatabase.checked;
+
+            if (this.database_ready) {
+                this.databaseLink.setAttribute("style","display:span;");
+            } else {
+                this.databaseLink.setAttribute("style","display:none;");
+            }
+
+            /* training controls */
+            console.log(this.database_ready);
+            this.trainInput.disabled = !this.database_ready;
+
+            /* search controls */
+            this.imageInput.disabled = false;
+            if (this.image_uploaded && this.search_ready) {
+                this.searchButton.setAttribute("class","button-primary");
+                this.searchButton.disabled = false;
+            } else {
+                this.searchButton.setAttribute("class","");
+                this.searchButton.disabled = true;
+            }
+        }
     }
 }
 
