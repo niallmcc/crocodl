@@ -39,7 +39,7 @@ sudo apt-get install libhdf5-dev
 
 This service allows you to train a model to classify images.
 
-Start a classification service and open its web page:
+Start a classification service and open its web page (which should happen automatically):
 
 ```
 python3 -m simpledl.image.web.train_service
@@ -55,18 +55,25 @@ In the example below these classes are named class1, class2 and class3.  You can
 root
   train
      class1
-        training image files for class1... 
+        image1.jpg
+        image2.jpg
+        ... 
      class2
-        training image files for class2...
+        imageA.jpg
+        ...
      class3
-        training image files for class3...
+        ... 
   test
      class1
-        test image files for class1... 
+        imageX1.jpg
+        imageX2.pg
+        ...
      class2
-        test image files for class2...
+        imageA.jpg
+        image123.png
+        ...
      class3
-        test image files for class3...
+        ...
 ```
 
 The model that you train will try to learn how to classify an image into one of these classes (in the example above, class1, class2 or class3)
@@ -91,7 +98,7 @@ When each epoch completes, the training chart will be updated with the model acc
 
 This service allows you to make predictions with a pre-trained image classification model.
 
-Start a scoring service and open its web page:
+Start a scoring service and open its web page (which should happen automatically):
 
 ```
 python3 -m simpledl.image.web.score_service
@@ -105,9 +112,9 @@ python3 -m simpledl.image.web.score_service
 
 ## Search for similar images
 
-This tool allows you to create and search through a database of images to try to find those considered similar by the model to a candidate image.
+This service allows you to create and search through a database of images to try to find those considered similar by the model to a candidate image.
 
-Start a search service and open its web page:
+Start a search service and open its web page (which should happen automatically):
 
 ```
 python3 -m simpledl.image.web.search_service
@@ -116,6 +123,8 @@ python3 -m simpledl.image.web.search_service
 * First use `Create Database` or `Upload Database` in the `Database` section to pick the database to use.
 
 * To add images to a database, use `Choose Zip Containing Image Files` to specify a zip file containing images.  Then press `Load Images` to load all images located under this folder into the database.
+
+for a simple example, you can use the file `data/dogs_vs_cats.zip` file.  The service will search all subfolders in the zip file looking for image files.
 
 The database will store a thumbnail of the image along with an image embedding - a vector of numbers computed by a pre-trained model. 
 
