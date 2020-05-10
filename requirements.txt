@@ -1,3 +1,5 @@
 tensorflow 
 pillow
 visigoth
+requests
+keras

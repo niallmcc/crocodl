@@ -131,3 +131,21 @@ The database will store a thumbnail of the image along with an image embedding -
 * To search the database for similar images, in the `Search Database for Similar Images` section, select the image file to search for using the `Load Search Image` button.  Then press the `Search` button.
 
 Thumbnails of the 3 images in the database deemed most similar will be displayed, ranked in order of decreasing similarity, along with a similarity score in the range 0.0 to 1.0.
+
+## Use Neural Style Transfer to restyle an image
+
+This service allows you to alter an image by borrowing the *style* from a different image.  This service downloads and runs the keras team's script `neural_style_transfer.py` described in https://keras.io/examples/neural_style_transfer/
+
+For more details of the approach used please see https://arxiv.org/abs/1508.06576
+
+Start a style transfer service and open its web page (which should happen automatically):
+
+```
+python3 -m simpledl.image.web.style_transfer_app
+```
+
+* First, in the `Input Images` section, upload the image to transform and the image from which the style is to be borrowed from your computer.  
+
+* Then specify the number of iterations to perform in the `Style Transfer Process` section and press `Start Restyling` to begin the restyling process.  Each iteration may a couple of minutes or more.
+
+* During restyling, in the `Results` section the images produced by each iteration can be viewed.  Use `Right click` + `Save Image As...` to save images to your computer.

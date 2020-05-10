@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link href="//fonts.googleapis.com/css?family=Raleway:400,300,600" rel="stylesheet" type="text/css">
+    <link rel="stylesheet" href="/css/normalize.css">
+    <link rel="stylesheet" href="/css/skeleton.css">
+    <link rel="stylesheet" href="/css/custom.css">
+    <script type="text/javascript" src="/js/runtime.js"></script>
+    <script type="text/javascript" src="/js/style_runtime.js"></script>
+</head>
+<body onload="boot()">
+    <h1>Style transfer</h1>
+     <fieldset>
+        <legend>Input Images</legend>
+        <div class="row">
+            <div class="one-half column">
+                <label for="upload_base_image_file">Choose Input Image File</label>
+                <input type="file" id="upload_base_image_file"/>
+                <progress id="upload_base_image_progress" min="0" max="100" value="0" style="display:none;">0% complete
+                </progress>
+                <div>
+                    <img width="512" id="base_image"/>
+                </div>
+            </div>
+            <div class="one-half column">
+                <label for="upload_style_image_file">Choose Style Image File</label>
+                <input type="file" id="upload_style_image_file"/>
+                <progress id="upload_style_image_progress" min="0" max="100" value="0" style="display:none;">0% complete
+                </progress>
+                <div>
+                    <img width="512" id="style_image"/>
+                </div>
+            </div>
+        </div>
+     </fieldset>
+     <fieldset>
+        <legend>Style Transfer Process</legend>
+         <div class="row">
+             <label for="nr_iterations" style="display:inline;">
+                 Iterations:
+                 <input type="number" min="1" step="1" value="5" id="nr_iterations"/>
+             </label>
+             <input type="button" class="button-primary" id="restyle_button" value="Start restyling"/>
+             <input type="button" class="" id="cancel_button" value="Cancel restyling"/>
+         </div>
+         <div class="row">
+            <progress id="restyle_progress" min="0" max="100" value="0" style="display:none;">0% complete
+            </progress>
+            <div id="restyle_info"></div>
+         </div>
+     </fieldset>
+    <fieldset>
+        <legend>Results</legend>
+         <div class="row">
+            <div id="restyle_select_parent">
+                <legend for="restyle_select">
+                    View
+                    <select id="restyle_select"></select>
+                </legend>
+            </div>
+         </div>
+         <div class="row">
+            <div>
+                <img id="restyle_image"/>
+            </div>
+         </div>
+     </fieldset>
+</body>
+</html>
