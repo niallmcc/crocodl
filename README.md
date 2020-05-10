@@ -146,6 +146,22 @@ python3 -m simpledl.image.web.style_transfer_app
 
 * First, in the `Input Images` section, upload the image to transform and the image from which the style is to be borrowed from your computer.  
 
+For example, try the images from the repo: `data/style_transfer/tubingen.jpg` and `data/style_transfer/starry_night.jpg` respectively.
+
 * Then specify the number of iterations to perform in the `Style Transfer Process` section and press `Start Restyling` to begin the restyling process.  Each iteration may a couple of minutes or more.
 
 * During restyling, in the `Results` section the images produced by each iteration can be viewed.  Use `Right click` + `Save Image As...` to save images to your computer.
+
+* Using the same images discussed in the paper, we see the following transformation after 1 iteration:
+
+Main Input Image:
+
+<img src="https://raw.githubusercontent.com/niallmcc/crocodl/master/data/style_transfer/tubingen.jpg" width="512" />
+
+Style Input Image:
+
+<img src="https://raw.githubusercontent.com/niallmcc/crocodl/master/data/style_transfer/starry_night.jpg" width="384" />
+
+Restyled Main Input:
+
+<img src="https://raw.githubusercontent.com/niallmcc/crocodl/master/data/style_transfer/starry_tubingen.png" width="512" />
