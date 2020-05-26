@@ -111,6 +111,7 @@ class Trainable(object):
 
 	def getMetadata(self):
 		return {
+			"type": "crocodl:classifier",
 			"architecture": self.getFactory().getArchitectureName(),
 			"classes": self.classes,
 			"epochs": self.epochs

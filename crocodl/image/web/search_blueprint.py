@@ -17,10 +17,12 @@ import shutil
 from flask import Flask, request, send_from_directory, jsonify
 from PIL import Image
 import threading
+from flask import current_app
+
+from flask import Blueprint
+search_blueprint = Blueprint('search_blueprint', __name__)
 
 # flask initialisation and configuration (see config.py)
-app = Flask(__name__)
-app.config.from_object('config.Config')
 
 from crocodl.utils.logutils import createLogger
 from crocodl.image.web.data_utils import unpack_data
@@ -97,30 +99,30 @@ class SearchThread(threading.Thread):
         global search_progress
         search_progress = progress
 
-class App(object):
+class SearchBlueprint(object):
     """
     Define the routes and handlers for the web service
     """
 
-    logger = createLogger("app")
+    logger = createLogger("search")
 
     ####################################################################################################################
-    # Main end points, invoked from train.html
+    # Main end points, invoked from index.html
     #
 
     @staticmethod
-    @app.route('/configuration.json', methods=['GET'])
+    @search_blueprint.route('/configuration.json', methods=['GET'])
     def get_configuration():
         return jsonify({"architectures": Factory.getAvailableArchitectures(Capability.feature_extraction)})
 
     @staticmethod
-    @app.route('/images_upload/<path:path>', methods=['POST'])
+    @search_blueprint.route('/images_upload/<path:path>', methods=['POST'])
     def add_images(path):
         global training
         if not training:
             global train_progress
             train_progress = "Adding images"
-            upload_dir = os.path.join(app.config["WORKSPACE_DIR"], "upload")
+            upload_dir = os.path.join(current_app.config["WORKSPACE_DIR"], "upload")
             if os.path.isdir(upload_dir):
                 shutil.rmtree(upload_dir)
             os.makedirs(upload_dir)
@@ -129,7 +131,7 @@ class App(object):
             zip_path = os.path.join(upload_dir, path)
             open(zip_path, "wb").write(request.data)
 
-            data_dir = os.path.join(app.config["WORKSPACE_DIR"], "data")
+            data_dir = os.path.join(current_app.config["WORKSPACE_DIR"], "data")
             if os.path.isdir(data_dir):
                 shutil.rmtree(data_dir)
             os.makedirs(data_dir)
@@ -141,9 +143,9 @@ class App(object):
         return jsonify({})
 
     @staticmethod
-    @app.route('/image_upload/<path:path>', methods=['POST'])
+    @search_blueprint.route('/image_upload/<path:path>', methods=['POST'])
     def upload_image(path):
-        image_dir = os.path.join(app.config["WORKSPACE_DIR"], "image")
+        image_dir = os.path.join(current_app.config["WORKSPACE_DIR"], "image")
         if os.path.isdir(image_dir):
             shutil.rmtree(image_dir)
         os.makedirs(image_dir)
@@ -151,24 +153,24 @@ class App(object):
         global image_path, search_image_url
         image_path = os.path.join(image_dir, path)
         open(image_path, "wb").write(request.data)
-        search_image_url = "/score_image/"+path
+        search_image_url = "score_image/"+path
         return jsonify({})
 
     @staticmethod
-    @app.route('/score_image/<path:path>', methods=['GET'])
+    @search_blueprint.route('/score_image/<path:path>', methods=['GET'])
     def send_scoreimage(path):
-        image_dir = os.path.join(app.config["WORKSPACE_DIR"], "image")
+        image_dir = os.path.join(current_app.config["WORKSPACE_DIR"], "image")
         return send_from_directory(image_dir, path)
 
     @staticmethod
-    @app.route('/database/<path:path>', methods=['GET'])
+    @search_blueprint.route('/database/<path:path>', methods=['GET'])
     def send_database(path):
         imagestore_dir = os.path.split(imagestore_path)[0]
         imagestore_filename = os.path.split(imagestore_path)[1]
         return send_from_directory(imagestore_dir, imagestore_filename)
 
     @staticmethod
-    @app.route('/search_image', methods=['POST'])
+    @search_blueprint.route('/search_image', methods=['POST'])
     def search_image():
         global search_progress
         search_progress = "Starting search..."
@@ -179,9 +181,9 @@ class App(object):
         return jsonify({})
 
     @staticmethod
-    @app.route('/upload_database/<path:path>', methods=['POST'])
+    @search_blueprint.route('/upload_database/<path:path>', methods=['POST'])
     def upload_database(path):
-        parent_dir = os.path.join(app.config["WORKSPACE_DIR"], "image_store")
+        parent_dir = os.path.join(current_app.config["WORKSPACE_DIR"], "image_store")
         if os.path.isdir(parent_dir):
             shutil.rmtree(parent_dir)
         os.makedirs(parent_dir)
@@ -202,14 +204,14 @@ class App(object):
         return jsonify({})
 
     @staticmethod
-    @app.route('/create_database', methods=['POST'])
+    @search_blueprint.route('/create_database', methods=['POST'])
     def create_database():
         settings = request.json
         architecture = settings["architecture"]
 
 
         global embedding_model
-        parent_dir = os.path.join(app.config["WORKSPACE_DIR"], "image_store")
+        parent_dir = os.path.join(current_app.config["WORKSPACE_DIR"], "image_store")
         if os.path.isdir(parent_dir):
             shutil.rmtree(parent_dir)
         os.makedirs(parent_dir)
@@ -229,7 +231,7 @@ class App(object):
         return jsonify({})
 
     @staticmethod
-    @app.route('/status', methods=['GET'])
+    @search_blueprint.route('/status', methods=['GET'])
     def status():
         global embedding_model, searching, training, search_progress, train_progress, search_results, image_path
         database_ready  = False
@@ -262,63 +264,5 @@ class App(object):
         global imagestore_url
         status["database_url"] = imagestore_url
         return jsonify(status)
-
-    ####################################################################################################################
-    # Service static files
-    #
-
-    @staticmethod
-    @app.route('/', methods=['GET'])
-    @app.route('/index.html', methods=['GET'])
-    def fetch():
-        """Serve the main page containing the form"""
-        return send_from_directory('static','search.html')
-
-    @staticmethod
-    @app.route('/css/<path:path>',methods = ['GET'])
-    def send_css(path):
-        """serve CSS files"""
-        return send_from_directory('static/css', path)
-
-    @staticmethod
-    @app.route('/js/<path:path>', methods=['GET'])
-    def send_js(path):
-        """serve JS files"""
-        return send_from_directory('static/js', path)
-
-    @staticmethod
-    @app.route('/images/<path:path>', methods=['GET'])
-    def send_images(path):
-        """serve image files"""
-        return send_from_directory('static/images', path)
-
-    @staticmethod
-    @app.route('/favicon.ico', methods=['GET'])
-    def send_favicon():
-        """serve favicon"""
-        return send_from_directory('static/images', 'favicon.ico')
-
-    @app.after_request
-    def add_header(r):
-        r.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
-        r.headers["Pragma"] = "no-cache"
-        r.headers["Expires"] = "0"
-        return r
-
-
-if __name__ == '__main__':
-    from crocodl.utils.web.browser import Browser
-
-    parser = Browser.getArgParser()
-    args = parser.parse_args()
-    # start the service and try to open a new browser tab if required
-    host = args.host
-    port = Browser.getEphemeralPort() if args.port <= 0 else args.port
-    if not args.noclient:
-        Browser("http://%s:%d" % (host, port)).launch()
-
-    app.run(host=host, port=port)
-
-
 
 

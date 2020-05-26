@@ -55,7 +55,7 @@ class SearchRuntime extends Runtime {
             var files = that.trainInput.files;
             for (var i = 0; i < files.length; i++) {
                 var file = files[i];
-                that.upload(file, '/images_upload/', 'upload_images_progress',function(result) {
+                that.upload(file, 'images_upload/', 'upload_images_progress',function(result) {
                     that.training = true;
                     that.refreshControls();
                     that.checkStatus();
@@ -67,7 +67,7 @@ class SearchRuntime extends Runtime {
             var files = that.imageInput.files;
             for (var i = 0; i < files.length; i++) {
                 var file = files[i];
-                that.upload(file, '/image_upload/', 'upload_image_progress',function(result) {
+                that.upload(file, 'image_upload/', 'upload_image_progress',function(result) {
                     that.clearSearchResults();
                     that.checkStatus();
                 });
@@ -79,7 +79,7 @@ class SearchRuntime extends Runtime {
             that.setDatabaseInfo("Uploading database...");
             for (var i = 0; i < files.length; i++) {
                 var file = files[i];
-                that.upload(file, '/upload_database/', 'upload_database_progress',function(result) {
+                that.upload(file, 'upload_database/', 'upload_database_progress',function(result) {
                     that.checkStatus();
                 });
             }
@@ -133,7 +133,7 @@ class SearchRuntime extends Runtime {
             var that = this;
             this.searching = true;
             this.refreshControls();
-            fetch("/search_image", {
+            fetch("search_image", {
                 method: 'POST',
                 cache: 'no-cache',
                 headers: {

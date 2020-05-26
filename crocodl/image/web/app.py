@@ -12,23 +12,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os.path
-import shutil
-from flask import Flask, request, send_from_directory, jsonify
+from flask import Flask, send_from_directory
 
 # flask initialisation and configuration (see config.py)
 app = Flask(__name__)
 app.config.from_object('config.Config')
 
 from crocodl.utils.logutils import createLogger
-from crocodl.utils.h5utils import read_metadata
-from crocodl.image.classifier.scorable import Scorable
 
-scorable = None
-model_path = ""
-image_path = ""
+from crocodl.image.web.style_blueprint import style_blueprint
+from crocodl.image.web.search_blueprint import search_blueprint
+from crocodl.image.web.train_blueprint import train_blueprint
+from crocodl.image.web.score_blueprint import score_blueprint
 
-import json
+app.register_blueprint(style_blueprint,url_prefix="/style_transfer")
+app.register_blueprint(search_blueprint,url_prefix="/search")
+app.register_blueprint(train_blueprint,url_prefix="/train_classifier")
+app.register_blueprint(score_blueprint,url_prefix="/score_classifier")
 
 class App(object):
     """
@@ -37,66 +37,10 @@ class App(object):
 
     logger = createLogger("app")
 
-    ####################################################################################################################
-    # Main end points, invoked from train.html
-    #
-
-    @staticmethod
-    @app.route('/score.json',methods = ['POST'])
-    def score():
-        global scorable, image
-        result = scorable.score(image_path)
-        return jsonify(result)
-
-    @staticmethod
-    @app.route('/model_upload/<path:path>', methods=['POST'])
-    def upload_model(path):
-        model_dir = os.path.join(app.config["WORKSPACE_DIR"], "model")
-        if os.path.isdir(model_dir):
-            shutil.rmtree(model_dir)
-        os.makedirs(model_dir)
-
-        global model_path, scorable
-        model_path = os.path.join(model_dir, path)
-        open(model_path, "wb").write(request.data)
-
-        scorable = Scorable()
-        scorable.load(model_path)
-
-        metadata = read_metadata(model_path)
-        del metadata["epochs"]
-        return jsonify(metadata)
-
-    @staticmethod
-    @app.route('/image_upload/<path:path>', methods=['POST'])
-    def upload_image(path):
-        image_dir = os.path.join(app.config["WORKSPACE_DIR"], "image")
-        if os.path.isdir(image_dir):
-            shutil.rmtree(image_dir)
-        os.makedirs(image_dir)
-
-        global image_path
-        image_path = os.path.join(image_dir, path)
-        open(image_path, "wb").write(request.data)
-
-        return jsonify("/score_image/"+path)
-
-    @staticmethod
-    @app.route('/score_image/<path:path>', methods=['GET'])
-    def send_scoreimage(path):
-        image_dir = os.path.join(app.config["WORKSPACE_DIR"], "image")
-        return send_from_directory(image_dir, path)
 
     ####################################################################################################################
     # Service static files
     #
-
-    @staticmethod
-    @app.route('/', methods=['GET'])
-    @app.route('/index.html', methods=['GET'])
-    def fetch():
-        """Serve the main page containing the form"""
-        return send_from_directory('static','score.html')
 
     @staticmethod
     @app.route('/css/<path:path>',methods = ['GET'])
@@ -122,6 +66,19 @@ class App(object):
         """serve favicon"""
         return send_from_directory('static/images', 'favicon.ico')
 
+    @staticmethod
+    @app.route('/<path:path>', methods=['GET'])
+    def fetch(path):
+        """Serve the main page containing the form"""
+        return send_from_directory('static/html', path)
+
+    @staticmethod
+    @app.route('/', methods=['GET'])
+    def index():
+        """Serve the main page containing the form"""
+        return send_from_directory('static/html', 'index.html')
+
+
     @app.after_request
     def add_header(r):
         r.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
@@ -138,7 +95,7 @@ if __name__ == '__main__':
     host = args.host
     port = Browser.getEphemeralPort() if args.port <= 0 else args.port
     if not args.noclient:
-        Browser("http://%s:%d" % (host, port)).launch()
+        Browser("http://%s:%d/index.html" % (host, port)).launch()
     app.run(host=host, port=port)
 
 

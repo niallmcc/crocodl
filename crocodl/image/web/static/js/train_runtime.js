@@ -49,7 +49,7 @@ class ClassifierRuntime extends Runtime {
             var files = that.fileInput.files;
             for (var i = 0; i < files.length; i++) {
                 var file = files[i];
-                that.upload(file, '/data_upload/', 'upload_data_progress',function(result) {
+                that.upload(file, 'data_upload/', 'upload_data_progress',function(result) {
                     that.setDataInfo(JSON.stringify(result));
                     that.data_ready = true;
                     that.refreshControls();
@@ -62,7 +62,7 @@ class ClassifierRuntime extends Runtime {
             that.setModelInfo("Uploading model...");
             for (var i = 0; i < files.length; i++) {
                 var file = files[i];
-                that.upload(file, '/model_upload/', 'upload_model_progress',function(result) {
+                that.upload(file, 'model_upload/', 'upload_model_progress',function(result) {
                     var details = result["model_details"]
                     var url = result["url"];
                     var filename = result["filename"];

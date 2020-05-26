@@ -16,10 +16,10 @@ import os.path
 import shutil
 import threading
 from flask import Flask, request, send_from_directory, jsonify
+from flask import current_app
 
-# flask initialisation and configuration (see config.py)
-app = Flask(__name__)
-app.config.from_object('config.Config')
+from flask import Blueprint
+train_blueprint = Blueprint('anomaly_blueprint', __name__)
 
 from crocodl.utils.logutils import createLogger
 from crocodl.image.model_factories.factory import Factory
@@ -38,9 +38,9 @@ data_folder = ""
 
 batch_size = 0
 
-accuracy_chart_html = ""
-svg = ChartUtils.createAccuracyChart([], 5)
-accuracy_chart_html = str(svg, "utf-8")
+loss_chart_html = ""
+svg = ChartUtils.createLossChart([], 5)
+loss_chart_html = str(svg, "utf-8")
 
 training = False
 progress = 0.0
@@ -69,19 +69,19 @@ class TrainingThread(threading.Thread):
         self.trainable.saveModel()
 
     def progress_cb(self,epoch,metrics):
-        svg = ChartUtils.createAccuracyChart(trainable.getEpochs(), current_start_epoch + current_nr_epochs)
-        global accuracy_chart_html
-        accuracy_chart_html= str(svg,"utf-8")
+        svg = ChartUtils.createLossChart(trainable.getEpochs(), current_start_epoch + current_nr_epochs)
+        global loss_chart_html
+        loss_chart_html= str(svg,"utf-8")
         if self.updateStats:
             self.updateStats(epoch,metrics)
 
 
-class App(object):
+class AnomalyBlueprint(object):
     """
     Define the routes and handlers for the web service
     """
 
-    logger = createLogger("app")
+    logger = createLogger("anomaly_app")
 
     @staticmethod
     def updateTrainingProgress(epoch,metrics):
@@ -103,11 +103,11 @@ class App(object):
         current_start_epoch = len(trainable.getEpochs())
 
     ####################################################################################################################
-    # Main end points, invoked from train.html
+    # Main end points, invoked from index.html
     #
 
     @staticmethod
-    @app.route('/launch_training.json',methods = ['POST'])
+    @train_blueprint.route('/launch_training.json',methods = ['POST'])
     def submit():
         global trainable, training_thread, data_folder, training
         global current_epoch, current_nr_epochs, batch_size
@@ -117,47 +117,51 @@ class App(object):
         training_thread = TrainingThread(
             data_folder,
             trainable,
-            lambda epoch,metrics: App.updateTrainingProgress(epoch,metrics),
+            lambda epoch,metrics: AnomalyBlueprint.updateTrainingProgress(epoch,metrics),
             epochs=current_nr_epochs,
             batchSize=batch_size,
-            onCompletion=lambda : App.setTrainingCompleted(),
-            onBatch=lambda batch,metrics: App.updateTrainingBatch(batch,metrics))
+            onCompletion=lambda : AnomalyBlueprint.setTrainingCompleted(),
+            onBatch=lambda batch,metrics: AnomalyBlueprint.updateTrainingBatch(batch,metrics))
 
         training = True
         training_thread.start()
-        return jsonify({"training":True,"progress":0})
+        return jsonify({})
 
     @staticmethod
-    @app.route('/training_progress.json', methods=['GET'])
+    @train_blueprint.route('/status.json', methods=['GET'])
     def get_progress():
-        return jsonify({"progress":progress, "training":training, "epoch":current_start_epoch+current_epoch, "batch":current_batch})
+        return jsonify({
+            "progress":progress,
+            "training":training,
+            "epoch":current_start_epoch+current_epoch,
+            "batch":current_batch})
 
     @staticmethod
-    @app.route('/training_accuracy_chart.html', methods=['GET'])
-    def get_accuracy_chart():
-        return accuracy_chart_html
+    @train_blueprint.route('/training_loss_chart.html', methods=['GET'])
+    def get_loss_chart():
+        return loss_chart_html
 
     @staticmethod
-    @app.route('/models/<path:path>', methods=['GET'])
+    @train_blueprint.route('/models/<path:path>', methods=['GET'])
     def download_model(path):
-        model_dir = os.path.join(app.config["WORKSPACE_DIR"], "model")
+        model_dir = os.path.join(current_app.config["WORKSPACE_DIR"], "model")
         return send_from_directory(model_dir, path)
 
     @staticmethod
-    @app.route('/configuration.json', methods=['GET'])
+    @train_blueprint.route('/configuration.json', methods=['GET'])
     def get_configuration():
-        return jsonify({"architectures":Factory.getAvailableArchitectures(Capability.classification)})
+        return jsonify({"architectures":Factory.getAvailableArchitectures(Capability.autoencoder)})
 
     @staticmethod
-    @app.route('/data_upload/<path:path>', methods=['POST'])
+    @train_blueprint.route('/data_upload/<path:path>', methods=['POST'])
     def upload_data(path):
-        upload_dir = os.path.join(app.config["WORKSPACE_DIR"],"upload")
+        upload_dir = os.path.join(current_app.config["WORKSPACE_DIR"],"upload")
         if os.path.isdir(upload_dir):
             shutil.rmtree(upload_dir)
         os.makedirs(upload_dir)
 
         upload_path = os.path.join(upload_dir,path)
-        data_dir = os.path.join(app.config["WORKSPACE_DIR"],"data")
+        data_dir = os.path.join(current_app.config["WORKSPACE_DIR"],"data")
         if os.path.isdir(data_dir):
             shutil.rmtree(data_dir)
         os.makedirs(data_dir)
@@ -180,7 +184,7 @@ class App(object):
         return jsonify({"classes":train_classes})
 
     @staticmethod
-    @app.route('/update_training_settings.json', methods=['POST'])
+    @train_blueprint.route('/update_training_settings.json', methods=['POST'])
     def update_training_settings():
         settings = request.json
         global current_nr_epochs, batch_size
@@ -188,17 +192,17 @@ class App(object):
         batch_size = settings["batch_size"]
         epochs = [] if not trainable else trainable.getEpochs()
 
-        svg = ChartUtils.createAccuracyChart(epochs, current_start_epoch+current_nr_epochs)
-        global accuracy_chart_html
-        accuracy_chart_html = str(svg, "utf-8")
+        svg = ChartUtils.createLossChart(epochs, current_start_epoch+current_nr_epochs)
+        global loss_chart_html
+        loss_chart_html = str(svg, "utf-8")
         return jsonify({})
 
     @staticmethod
-    @app.route('/create_model.json', methods=['POST'])
+    @train_blueprint.route('/create_model.json', methods=['POST'])
     def create_model():
         settings = request.json
 
-        model_dir = os.path.join(app.config["WORKSPACE_DIR"], "model")
+        model_dir = os.path.join(current_app.config["WORKSPACE_DIR"], "model")
         if os.path.isdir(model_dir):
             shutil.rmtree(model_dir)
         os.makedirs(model_dir)
@@ -218,12 +222,12 @@ class App(object):
 
         metadata = read_metadata(model_path)
         del metadata["epochs"]
-        return jsonify({"model_details":metadata,"url":"/models/model.h5","filename":"model.h5"})
+        return jsonify({"model_details":metadata,"url":"models/model.h5","filename":"model.h5"})
 
     @staticmethod
-    @app.route('/model_upload/<path:path>', methods=['POST'])
+    @train_blueprint.route('/model_upload/<path:path>', methods=['POST'])
     def upload_model(path):
-        model_dir = os.path.join(app.config["WORKSPACE_DIR"], "model")
+        model_dir = os.path.join(current_app.config["WORKSPACE_DIR"], "model")
         if os.path.isdir(model_dir):
             shutil.rmtree(model_dir)
         os.makedirs(model_dir)
@@ -242,62 +246,5 @@ class App(object):
 
         metadata = read_metadata(model_path)
         del metadata["epochs"]
-        return jsonify({"model_details":metadata,"url":"/models/"+path,"filename":path})
-
-    ####################################################################################################################
-    # Service static files
-    #
-
-    @staticmethod
-    @app.route('/', methods=['GET'])
-    @app.route('/index.html', methods=['GET'])
-    def fetch():
-        """Serve the main page containing the form"""
-        return send_from_directory('static','train.html')
-
-    @staticmethod
-    @app.route('/css/<path:path>',methods = ['GET'])
-    def send_css(path):
-        """serve CSS files"""
-        return send_from_directory('static/css', path)
-
-    @staticmethod
-    @app.route('/js/<path:path>', methods=['GET'])
-    def send_js(path):
-        """serve JS files"""
-        return send_from_directory('static/js', path)
-
-    @staticmethod
-    @app.route('/images/<path:path>', methods=['GET'])
-    def send_images(path):
-        """serve image files"""
-        return send_from_directory('static/images', path)
-
-    @staticmethod
-    @app.route('/favicon.ico', methods=['GET'])
-    def send_favicon():
-        """serve favicon"""
-        return send_from_directory('static/images', 'favicon.ico')
-
-    @app.after_request
-    def add_header(r):
-        r.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
-        r.headers["Pragma"] = "no-cache"
-        r.headers["Expires"] = "0"
-        return r
-
-
-
-if __name__ == '__main__':
-    from crocodl.utils.web.browser import Browser
-    args = Browser.getArgParser().parse_args()
-    # start the service and try to open a new browser tab if required
-    host = args.host
-    port = Browser.getEphemeralPort() if args.port <= 0 else args.port
-    if not args.noclient:
-        Browser("http://%s:%d"%(host,port)).launch()
-    app.run(host=host,port=port)
-
-
-
+        return jsonify({"model_details":metadata,"url":"models/"+path,"filename":path})
 

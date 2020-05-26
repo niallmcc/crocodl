@@ -6,6 +6,12 @@ import re
 
 class StyleTransfer(object):
 
+    code = ""
+
+    @staticmethod
+    def getCode():
+        return StyleTransfer.code
+
     def __init__(self,folder="/tmp",iteration_cb=None):
         self.folder = folder
         self.iteration_cb = iteration_cb
@@ -16,10 +22,8 @@ class StyleTransfer(object):
 
     def transfer(self,content_image_path,style_image_path,iter=1,content_weight=0.025,style_weight=1.0,tv_weight=1.0):
         self.clearOutput()
-        response = requests.get("https://raw.githubusercontent.com/keras-team/keras/master/examples/neural_style_transfer.py")
         script_path = os.path.join(self.folder,"neural_style_transfer.py")
-        # script_path = "/home/dev/restyle/neural_style_transfer.py"
-        open(script_path,"wb").write(response.content)
+        open(script_path,"wb").write(StyleTransfer.code)
         self.proc = subprocess.Popen([sys.executable,script_path,content_image_path,style_image_path,"out",
                         "--iter",str(iter),
                         "--content_weight",str(content_weight),
@@ -58,6 +62,9 @@ class StyleTransfer(object):
             if self.iteration_cb:
                 print(str(self.output_files))
                 self.iteration_cb(self.output_files)
+
+response = requests.get("https://raw.githubusercontent.com/keras-team/keras/master/examples/neural_style_transfer.py")
+StyleTransfer.code = response.content
 
 if __name__ == '__main__':
     st = StyleTransfer("/tmp")

@@ -18,4 +18,4 @@ from enum import Enum
 class Capability(Enum):
     classification = 0
     feature_extraction = 1
-    clustering = 2
+    autoencoder = 2

@@ -37,7 +37,7 @@ class ScoreRuntime extends Runtime {
             var files = that.modelInput.files;
             for (var i = 0; i < files.length; i++) {
                 var file = files[i];
-                that.upload(file, '/model_upload/', 'upload_model_progress',function(result) {
+                that.upload(file, 'model_upload/', 'upload_model_progress',function(result) {
                     that.modelInfo.innerHTML="";
                     that.modelInfo.appendChild(document.createTextNode(JSON.stringify(result)));
                     that.model_uploaded = true;
@@ -51,7 +51,7 @@ class ScoreRuntime extends Runtime {
             var files = that.imageInput.files;
             for (var i = 0; i < files.length; i++) {
                 var file = files[i];
-                that.upload(file, '/image_upload/', 'upload_image_progress',function(url) {
+                that.upload(file, 'image_upload/', 'upload_image_progress',function(url) {
                     that.image.setAttribute("src",url);
                     that.image_uploaded = true;
                     that.clearScores();

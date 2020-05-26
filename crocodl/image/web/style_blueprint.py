@@ -17,13 +17,13 @@ import shutil
 from flask import Flask, request, send_from_directory, jsonify
 import threading
 from flask import current_app
-import json
+from crocodl.utils.web.code_formatter import CodeFormatter
 
 from flask import Blueprint
 
 from crocodl.image.style_transfer.style_transfer import StyleTransfer
 
-blueprint = Blueprint('style_blueprint', __name__)
+style_blueprint = Blueprint('style_blueprint', __name__)
 
 from crocodl.utils.logutils import createLogger
 
@@ -76,14 +76,14 @@ class StyleBlueprint(object):
     Define the routes and handlers for the web service
     """
 
-    logger = createLogger("app")
+    logger = createLogger("style_transfer")
 
     ####################################################################################################################
-    # Main end points, invoked from train.html
+    # Main end points, invoked from index.html
     #
 
     @staticmethod
-    @blueprint.route('/restyle',methods = ['POST'])
+    @style_blueprint.route('/restyle',methods = ['POST'])
     def restyler():
         settings = request.json
         global restyling_iterations
@@ -102,7 +102,7 @@ class StyleBlueprint(object):
         return jsonify({})
 
     @staticmethod
-    @blueprint.route('/cancel', methods=['POST'])
+    @style_blueprint.route('/cancel', methods=['POST'])
     def cancel():
         global r
         if r != None:
@@ -110,7 +110,7 @@ class StyleBlueprint(object):
         return jsonify(True)
 
     @staticmethod
-    @blueprint.route('/base_image_upload/<path:path>', methods=['POST'])
+    @style_blueprint.route('/base_image_upload/<path:path>', methods=['POST'])
     def upload_base_image(path):
         image_dir = os.path.join(current_app.config["WORKSPACE_DIR"], "image", "base")
         if os.path.isdir(image_dir):
@@ -127,7 +127,7 @@ class StyleBlueprint(object):
         return jsonify({"url":base_image_url})
 
     @staticmethod
-    @blueprint.route('/style_image_upload/<path:path>', methods=['POST'])
+    @style_blueprint.route('/style_image_upload/<path:path>', methods=['POST'])
     def upload_style_image(path):
         image_dir = os.path.join(current_app.config["WORKSPACE_DIR"], "image", "style")
         if os.path.isdir(image_dir):
@@ -144,13 +144,20 @@ class StyleBlueprint(object):
         return jsonify({"url":style_image_url})
 
     @staticmethod
-    @blueprint.route('/style_image/<path:path>', methods=['GET'])
+    @style_blueprint.route('/style_image/<path:path>', methods=['GET'])
     def send_styleimage(path):
         image_dir = os.path.join(current_app.config["WORKSPACE_DIR"], "image")
         return send_from_directory(image_dir, path)
 
     @staticmethod
-    @blueprint.route('/restyled_image/<path:path>', methods=['GET'])
+    @style_blueprint.route('/view_code', methods=['GET'])
+    def send_code():
+        cf = CodeFormatter()
+        html = cf.formatHTML(StyleTransfer.getCode())
+        return html
+
+    @staticmethod
+    @style_blueprint.route('/restyled_image/<path:path>', methods=['GET'])
     def send_restyledimage(path):
         image_dir = os.path.join(current_app.config["WORKSPACE_DIR"], "restyle")
         return send_from_directory(image_dir, path)
@@ -158,7 +165,7 @@ class StyleBlueprint(object):
 
 
     @staticmethod
-    @blueprint.route('/status', methods=['GET'])
+    @style_blueprint.route('/status', methods=['GET'])
     def status():
         s = {}
         s["restyling"] = restyling

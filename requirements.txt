@@ -3,3 +3,4 @@ pillow
 visigoth
 requests
 keras
+Pygments
