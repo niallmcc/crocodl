@@ -22,18 +22,19 @@ class ChartUtils(object):
 
     @staticmethod
     def createAccuracyChart(data, total_epochs):
-        return ChartUtils.createChart("Accuracy %","accuracy","val_accuracy",lambda y:y*100,data,total_epochs)
+        return ChartUtils.createChart("Accuracy %","accuracy","val_accuracy",lambda y:y*100,data,total_epochs,100)
 
     @staticmethod
     def createLossChart(data,total_epochs):
-        return ChartUtils.createChart("Loss","loss","val_loss",lambda y:y,data,total_epochs)
+        return ChartUtils.createChart("Loss","loss","val_loss",lambda y:y,data,total_epochs,None)
 
     @staticmethod
-    def createChart(y_axis,train_key,test_key,y_fn,data,total_epochs):
+    def createChart(y_axis,train_key,test_key,y_fn,data,total_epochs,max_y):
         dataset = [[idx + 1, y_fn(data[idx][train_key]), "training"] for idx in range(len(data))]
         dataset += [[idx + 1, y_fn(data[idx][test_key]), "test"] for idx in range(len(data))]
 
         min_y = 0 if len(dataset) == 0 else 10 * (min(map(lambda x: x[1], dataset)) // 10)
+        min_x = 0 if total_epochs == 1 else 1
 
         d = Diagram(fill="white")
 
@@ -45,12 +46,13 @@ class ChartUtils(object):
 
         (ax, ay) = al.getAxes()
         ax.setLabel("Epochs")
-        ax.setMinValue(0)
+        ax.setMinValue(min_x)
         ax.setMaxValue(total_epochs)
         ax.setFontHeight(12)
         ay.setLabel(y_axis)
         ay.setMinValue(min_y)
-        ay.setMaxValue(100.0)
+        if max_y is not None:
+            ay.setMaxValue(max_y)
         ay.setFontHeight(12)
 
         d.add(al)

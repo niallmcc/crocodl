@@ -14,7 +14,7 @@
 
 import os.path
 import shutil
-from flask import Flask, request, send_from_directory, jsonify
+from flask import request, send_from_directory, jsonify
 from PIL import Image
 import threading
 from flask import current_app
@@ -28,7 +28,7 @@ from crocodl.utils.logutils import createLogger
 from crocodl.image.web.data_utils import unpack_data
 from crocodl.image.embedding.embedding_model import EmbeddingModel
 from crocodl.image.embedding.image_store import ImageStore
-from crocodl.image.utils.image_utils import ImageUtils
+from crocodl.utils.image_utils import ImageUtils
 from crocodl.image.model_factories.factory import Factory
 from crocodl.image.model_factories.capability import Capability
 

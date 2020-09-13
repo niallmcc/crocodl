@@ -14,10 +14,11 @@
 
 from crocodl.image.model_factories.vgg16_factory import VGG16Factory
 from crocodl.image.model_factories.mobilenetv2_factory import MobileNetV2Factory
+from crocodl.image.model_factories.autoencoder_factory import AutoencoderFactory
 
 class Factory(object):
 
-    FACTORIES = [MobileNetV2Factory,VGG16Factory]
+    FACTORIES = [MobileNetV2Factory,VGG16Factory,AutoencoderFactory]
 
     @staticmethod
     def getFactory(architecture_name):
@@ -25,6 +26,8 @@ class Factory(object):
             return VGG16Factory(architecture_name)
         if architecture_name in MobileNetV2Factory.getArchitectureNames():
             return MobileNetV2Factory(architecture_name)
+        if architecture_name in AutoencoderFactory.getArchitectureNames():
+            return AutoencoderFactory(architecture_name)
         raise Exception("No factory found for architecture named %s"%(architecture_name))
 
     @staticmethod

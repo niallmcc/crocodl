@@ -20,6 +20,7 @@ from flask import current_app
 from crocodl.utils.logutils import createLogger
 from crocodl.utils.h5utils import read_metadata
 from crocodl.image.classifier.scorable import Scorable
+from crocodl.image.model_factories.factory import Factory
 
 from flask import Blueprint
 score_blueprint = Blueprint('score_blueprint', __name__)
@@ -57,11 +58,11 @@ class ScoreBlueprint(object):
         global model_path, scorable
         model_path = os.path.join(model_dir, path)
         open(model_path, "wb").write(request.data)
-
-        scorable = Scorable()
-        scorable.load(model_path)
-
         metadata = read_metadata(model_path)
+        architecture = metadata["architecture"]
+        factory = Factory.getFactory(architecture)
+        scorable = factory.getScorable()
+        scorable.load(model_path)
         del metadata["epochs"]
         return jsonify(metadata)
 
@@ -84,50 +85,6 @@ class ScoreBlueprint(object):
     def send_scoreimage(path):
         image_dir = os.path.join(current_app.config["WORKSPACE_DIR"], "image")
         return send_from_directory(image_dir, path)
-
-    ####################################################################################################################
-    # Service static files
-    #
-
-    # @staticmethod
-    # @app.route('/', methods=['GET'])
-    # @app.route('/index.html', methods=['GET'])
-    # def fetch():
-    #     """Serve the main page containing the form"""
-    #     return send_from_directory('static','index.html')
-    #
-    # @staticmethod
-    # @app.route('/css/<path:path>',methods = ['GET'])
-    # def send_css(path):
-    #     """serve CSS files"""
-    #     return send_from_directory('static/css', path)
-    #
-    # @staticmethod
-    # @app.route('/js/<path:path>', methods=['GET'])
-    # def send_js(path):
-    #     """serve JS files"""
-    #     return send_from_directory('static/js', path)
-    #
-    # @staticmethod
-    # @app.route('/images/<path:path>', methods=['GET'])
-    # def send_images(path):
-    #     """serve image files"""
-    #     return send_from_directory('static/images', path)
-    #
-    # @staticmethod
-    # @app.route('/favicon.ico', methods=['GET'])
-    # def send_favicon():
-    #     """serve favicon"""
-    #     return send_from_directory('static/images', 'favicon.ico')
-    #
-    # @app.after_request
-    # def add_header(r):
-    #     r.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
-    #     r.headers["Pragma"] = "no-cache"
-    #     r.headers["Expires"] = "0"
-    #     return r
-
-
 
 
 

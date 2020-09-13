@@ -12,13 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-class BaseFactory:
-
-    def __init__(self, architecture_name):
-        self.architecture_name = architecture_name
-
-    def getArchitectureName(self):
-        return self.architecture_name
+class BaseFactory(object):
 
     def createClassifier(self, training_classes=2, settings={}):
         raise NotImplementedError("Classifier")

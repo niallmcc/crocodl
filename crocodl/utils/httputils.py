@@ -32,7 +32,8 @@ class XCallback(Callback):
 
     def on_epoch_end(self, epoch, logs=None):
         global status
-        status["logs"].append({"epoch":epoch,"logs":logs})
+        logs["epoch"] = epoch
+        status["logs"].append(logs)
         status["completed_epoch"] = epoch
         status["completed_batch"] = 0
 

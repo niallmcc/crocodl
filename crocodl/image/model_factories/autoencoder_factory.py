@@ -15,13 +15,29 @@
 from crocodl.image.model_factories.base_factory import BaseFactory
 from crocodl.image.model_factories.capability import Capability
 
-class AutoencoderFactory(BaseFactory):
+
+class AutoencoderFactory(BaseFactory,object):
 
     BASIC1 = "autoencoder_basic1"
     BASIC2 = "autoencoder_basic2"
 
     def __init__(self,architecture_name):
-        super().__init__(architecture_name)
+        self.architecture_name = architecture_name
+        if architecture_name == AutoencoderFactory.BASIC1:
+            self.image_size = 128
+            self.stages = 3
+            self.filters = 6
+        elif architecture_name == AutoencoderFactory.BASIC2:
+            self.image_size = 256
+            self.stages = 4
+            self.filters = 6
+
+    def getHyperParameters(self):
+        return {
+            "--image_size": self.image_size,
+            "--stages": self.stages,
+            "--filters": self.filters
+        }
 
     @staticmethod
     def getArchitectureNames():
@@ -30,5 +46,24 @@ class AutoencoderFactory(BaseFactory):
     @staticmethod
     def getCapabilities():
         return { Capability.autoencoder }
+
+    @staticmethod
+    def getModelUtilsModule():
+        return "crocodl.utils.autoencoder_utils"
+
+    @staticmethod
+    def getTrainable():
+        from crocodl.image.autoencoder.trainable import Trainable
+        return Trainable()
+
+    @staticmethod
+    def getScorable():
+        from crocodl.image.autoencoder.scorable import Scorable
+        return Scorable()
+
+
+
+
+
 
 

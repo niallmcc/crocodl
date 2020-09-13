@@ -10,7 +10,7 @@
 
 <body onload="boot_runtime()">
 <div class="container">
-    <h1>Score an Image Classifier</h1>
+    <h1>Score an Image</h1>
 
     <fieldset>
         <legend>Model Settings</legend>
@@ -42,7 +42,7 @@
             <div class="one-half column">
                 <progress id="upload_image_progress" min="0" max="100" value="0" style="display:none;">0% complete
                 </progress>
-                <table id="score_table">
+                <table id="score_table" style="display:none;">
                     <thead>
                         <tr>
                             <th>Class</th>
@@ -50,6 +50,15 @@
                         </tr>
                     </thead>
                     <tbody id="score_table_body">
+                    </tbody>
+                </table>
+                <table id="distance_table" style="display:none;">
+                    <thead>
+                        <tr>
+                            <th>Distance</th>
+                        </tr>
+                    </thead>
+                    <tbody id="distance_table_body">
                     </tbody>
                 </table>
             </div>

@@ -1,6 +1,8 @@
-tensorflow 
+wheel
+tensorflow
 pillow
 visigoth
 requests
 keras
+flask
 Pygments

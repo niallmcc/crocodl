@@ -15,7 +15,7 @@
 import sqlite3
 import json
 import math
-from crocodl.image.utils.image_utils import ImageUtils
+from crocodl.utils.image_utils import ImageUtils
 
 class ImageStore(object):
 

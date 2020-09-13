@@ -24,11 +24,12 @@ class StyleTransfer(object):
         self.clearOutput()
         script_path = os.path.join(self.folder,"neural_style_transfer.py")
         open(script_path,"wb").write(StyleTransfer.code)
-        self.proc = subprocess.Popen([sys.executable,script_path,content_image_path,style_image_path,"out",
+        args = [sys.executable,script_path,content_image_path,style_image_path,"out",
                         "--iter",str(iter),
                         "--content_weight",str(content_weight),
                         "--style_weight", str(style_weight),
-                        "--tv_weight",str(tv_weight)],cwd=self.folder)
+                        "--tv_weight",str(tv_weight),">","/tmp/t.t"]
+        self.proc = subprocess.Popen(args,cwd=self.folder)
         running = True
         while running:
             try:

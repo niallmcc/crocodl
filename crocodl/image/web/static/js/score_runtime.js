@@ -29,7 +29,11 @@ class ScoreRuntime extends Runtime {
         this.modelInput = $("upload_model_file");
         this.imageInput = $("upload_image_file");
         this.image = $("image");
+        this.score_table = $("score_table");
         this.score_table_body = $("score_table_body");
+
+        this.distance_table = $("distance_table");
+        this.distance_table_body = $("distance_table_body");
         this.model_uploaded = false;
         this.image_uploaded = false;
 
@@ -83,22 +87,38 @@ class ScoreRuntime extends Runtime {
 
     clearScores() {
         this.score_table_body.innerHTML = "";
+        this.score_table.setAttribute("style","display:none;");
+        this.distance_table_body.innerHTML = "";
+        this.distance_table.setAttribute("style","display:none;");
     }
 
     showScores(results) {
-        // alert(JSON.stringify(results));
-        var scores = results["scores"];
-        for(var i=0; i<scores.length; i++) {
-            var cls = scores[i][0];
-            var score = scores[i][1];
-            var t1 = document.createTextNode(cls);
-            var t2 = document.createTextNode(score.toFixed(3));
-            var td1 = document.createElement("td"); td1.appendChild(t1);
-            var td2 = document.createElement("td"); td2.appendChild(t2);
+        alert(JSON.stringify(results));
+        if (results["distance"] != undefined) {
+            this.distance_table.setAttribute("style","display:block;");
+            var t1 = document.createTextNode(results["distance"].toFixed(3));
+            var td1 = document.createElement("td");
+            td1.appendChild(t1);
             var tr = document.createElement("tr");
             tr.appendChild(td1);
-            tr.appendChild(td2);
-            this.score_table_body.appendChild(tr);
+            this.distance_table_body.appendChild(tr);
+        } else if (results["scores"]) {
+            this.score_table.setAttribute("style","display:block;");
+            var scores = results["scores"];
+            for (var i = 0; i < scores.length; i++) {
+                var cls = scores[i][0];
+                var score = scores[i][1];
+                var t1 = document.createTextNode(cls);
+                var t2 = document.createTextNode(score.toFixed(3));
+                var td1 = document.createElement("td");
+                td1.appendChild(t1);
+                var td2 = document.createElement("td");
+                td2.appendChild(t2);
+                var tr = document.createElement("tr");
+                tr.appendChild(td1);
+                tr.appendChild(td2);
+                this.score_table_body.appendChild(tr);
+            }
         }
     }
 }

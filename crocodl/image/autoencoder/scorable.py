@@ -22,6 +22,7 @@ from time import sleep
 import re
 
 from crocodl.utils.web.browser import Browser
+
 from crocodl.utils.codeutils import expand_imports
 from crocodl.utils.h5utils import read_metadata
 
@@ -56,7 +57,6 @@ class Scorable(object):
 
 
 	def score(self,image_path):
-		print("score")
 		self.startServer()
 		retry = 0
 		while retry < 5:
@@ -65,7 +65,6 @@ class Scorable(object):
 				if response.status_code == 200:
 					return response.json()
 			except Exception as ex:
-				print(ex)
 				retry += 1
 				sleep(5)
 
@@ -76,19 +75,16 @@ class Scorable(object):
 
 	@staticmethod
 	def getCode(architecture):
-		from crocodl.image.model_factories.factory import Factory
-		factory = Factory.getFactory(architecture)
-		script_src_path = os.path.join(os.path.split(__file__)[0], "score_classifier.py")
+		script_src_path = os.path.join(os.path.split(__file__)[0], "score_autoencoder.py")
 		code = open(script_src_path, "r").read()
-		root_folder = os.path.join(os.path.split(__file__)[0], "..", "..", "..")
-		code = code.replace("from crocodl.utils.mobilenetv2_utils import ModelUtils",
-							"from %s import ModelUtils" % (factory.getModelUtilsModule()))
-		code = expand_imports(code, re.compile("from (crocodl\.utils\.[^ ]*) import .*"), root_folder)
 		return code
 
 if __name__ == '__main__':
 	s = Scorable()
 	s.load("/tmp/model.h5")
 	score = s.score("/home/dev/github/crocodl/data/dogs_vs_cats/train/cats/cat.60.jpg")
+	score2 = s.score("/home/dev/github/crocodl/data/dogs_vs_cats/train/dogs/dog.9822.jpg")
 	print(str(score))
+	print(str(score2))
+
 	s.close()

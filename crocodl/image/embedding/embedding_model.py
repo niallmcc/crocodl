@@ -18,7 +18,7 @@ from PIL import Image
 
 from crocodl.image.embedding.image_store import ImageStore
 from crocodl.image.model_factories.factory import Factory
-from crocodl.image.utils.image_utils import ImageUtils
+from crocodl.utils.image_utils import ImageUtils
 
 # ref: https://machinelearningmastery.com/how-to-develop-a-convolutional-neural-network-to-classify-photos-of-dogs-and-cats/
 

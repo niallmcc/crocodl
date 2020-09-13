@@ -25,8 +25,10 @@ from crocodl.utils.logutils import createLogger
 from crocodl.image.model_factories.factory import Factory
 from crocodl.image.model_factories.capability import Capability
 from crocodl.image.web.data_utils import unpack_data, locate_testtrain_subdir, get_classes
+from crocodl.utils.web.code_formatter import CodeFormatter
 from crocodl.utils.h5utils import read_metadata
-from crocodl.image.classifier.trainable import Trainable
+from crocodl.image.classifier.trainable import Trainable as TrainableClassifier
+from crocodl.image.autoencoder.trainable import Trainable as TrainableAutoEncoder
 from crocodl.image.web.chart_utils import ChartUtils
 
 train_classes = []
@@ -35,22 +37,42 @@ test_classes = []
 trainable = None
 model_path = ""
 data_folder = ""
+data_info = None
 
-batch_size = 0
+model_details = {}
+model_filename = ""
+model_url = ""
 
-accuracy_chart_html = ""
-svg = ChartUtils.createAccuracyChart([], 5)
-accuracy_chart_html = str(svg, "utf-8")
+architecture = ""
+architectures = []
+create_or_update = "create"
+batch_size = 16
+
+chart_html = ""
+chart_type = "loss"
+if chart_type == "accuracy":
+    chart_html = ChartUtils.createAccuracyChart([], 5)
+else:
+    chart_html = ChartUtils.createLossChart([], 5)
+chart_types = ["accuracy","loss"]
 
 training = False
 progress = 0.0
 
 current_start_epoch = 0 # start epoch of the current training
-current_nr_epochs = 0   # number of epochs in current training
+current_nr_epochs = 5   # number of epochs in current training
 current_epoch = 0       # number of completed epochs in current training
 current_batch = 0       # number of completed batches in current epoch
 
 import json
+
+def updateChart(logs,nr_epochs):
+    global chart_html
+    if chart_type == "accuracy":
+        chart_html = ChartUtils.createAccuracyChart(logs, nr_epochs)
+    else:
+        chart_html = ChartUtils.createLossChart(logs, nr_epochs)
+
 
 class TrainingThread(threading.Thread):
 
@@ -63,15 +85,19 @@ class TrainingThread(threading.Thread):
         self.onCompletion=onCompletion
         self.onBatch=onBatch
         self.trainable = trainable
+        self.logs = []
 
     def run(self):
-        self.trainable.train(self.foldername,lambda epoch,metrics:self.progress_cb(epoch,metrics),epochs=self.epochs,batchSize=self.batchSize,completion_callback=self.onCompletion,batch_callback=self.onBatch)
-        self.trainable.saveModel()
+        training_folder = os.path.join(self.foldername, "train")
+        testing_folder = os.path.join(self.foldername, "test")
+        self.trainable.train(self.foldername,training_folder,testing_folder,epoch_callback=lambda epoch,metrics:self.progress_cb(epoch,metrics),epochs=self.epochs,batch_size=self.batchSize,completion_callback=self.onCompletion,batch_callback=self.onBatch)
 
     def progress_cb(self,epoch,metrics):
-        svg = ChartUtils.createAccuracyChart(trainable.getEpochs(), current_start_epoch + current_nr_epochs)
-        global accuracy_chart_html
-        accuracy_chart_html= str(svg,"utf-8")
+        if isinstance(metrics,list):
+            self.logs = metrics
+        else:
+            self.logs.append(metrics)
+        updateChart(self.logs, current_start_epoch + current_nr_epochs)
         if self.updateStats:
             self.updateStats(epoch,metrics)
 
@@ -114,6 +140,32 @@ class TrainBlueprint(object):
 
         current_epoch = 0
 
+        if create_or_update == "create":
+            model_dir = os.path.join(current_app.config["WORKSPACE_DIR"], "model")
+            if os.path.isdir(model_dir):
+                shutil.rmtree(model_dir)
+            os.makedirs(model_dir)
+
+            global model_path, trainable, current_start_epoch
+            model_path = os.path.join(model_dir, "model.h5")
+            current_start_epoch = 0
+            updateChart([], current_nr_epochs)
+
+            global model_details, model_url, model_filename
+            model_details = architecture
+            model_url = "models/model.h5"
+            model_filename = "model.h5"
+            if len(train_classes) > 1:
+                trainable = TrainableClassifier()
+                trainable.createEmpty(model_path, train_classes, {TrainableClassifier.ARCHITECTURE: architecture})
+            else:
+                trainable = TrainableAutoEncoder()
+                trainable.createEmpty(model_path, train_classes, {TrainableAutoEncoder.ARCHITECTURE: architecture})
+
+        else:
+            if trainable == None:
+                return jsonify({"error":"No model loaded"})
+
         training_thread = TrainingThread(
             data_folder,
             trainable,
@@ -125,28 +177,39 @@ class TrainBlueprint(object):
 
         training = True
         training_thread.start()
-        return jsonify({"training":True,"progress":0})
+        return jsonify({})
 
     @staticmethod
-    @train_blueprint.route('/training_progress.json', methods=['GET'])
-    def get_progress():
-        return jsonify({"progress":progress, "training":training, "epoch":current_start_epoch+current_epoch, "batch":current_batch})
+    @train_blueprint.route('/status.json', methods=['GET'])
+    def get_status():
+        return jsonify({
+            "progress":progress,
+            "training":training,
+            "epoch":current_start_epoch+current_epoch,
+            "batch":current_batch,
+            "data_info":data_info,
+            "model_details":model_details,
+            "model_filename":model_filename,
+            "model_url":model_url,
+            "batch_size":batch_size,
+            "nr_epochs":current_nr_epochs,
+            "chart_type":chart_type,
+            "chart_types":chart_types,
+            "architectures":architectures,
+            "create_or_update":create_or_update,
+            "model_ready": (create_or_update == "create" or model_filename != "")
+        })
 
     @staticmethod
-    @train_blueprint.route('/training_accuracy_chart.html', methods=['GET'])
-    def get_accuracy_chart():
-        return accuracy_chart_html
+    @train_blueprint.route('/training_chart.html', methods=['GET'])
+    def get_training_chart():
+        return chart_html
 
     @staticmethod
     @train_blueprint.route('/models/<path:path>', methods=['GET'])
     def download_model(path):
         model_dir = os.path.join(current_app.config["WORKSPACE_DIR"], "model")
         return send_from_directory(model_dir, path)
-
-    @staticmethod
-    @train_blueprint.route('/configuration.json', methods=['GET'])
-    def get_configuration():
-        return jsonify({"architectures":Factory.getAvailableArchitectures(Capability.classification)})
 
     @staticmethod
     @train_blueprint.route('/data_upload/<path:path>', methods=['POST'])
@@ -176,49 +239,61 @@ class TrainBlueprint(object):
 
         print("training classes: "+json.dumps(train_classes))
         print("test classes: " + json.dumps(test_classes))
+        global data_info
+        data_info = {"classes": train_classes}
+        global architectures
+        if len(train_classes) > 1:
+            architectures = Factory.getAvailableArchitectures(Capability.classification)
+        else:
+            architectures = Factory.getAvailableArchitectures(Capability.autoencoder)
 
-        return jsonify({"classes":train_classes})
+        global chart_type, chart_types
+        if len(train_classes) > 1:
+            chart_types = ["accuracy","loss"]
+        else:
+            chart_types = ["loss"]
+            chart_type = "loss"
+
+        return jsonify({})
 
     @staticmethod
     @train_blueprint.route('/update_training_settings.json', methods=['POST'])
     def update_training_settings():
         settings = request.json
+        print(json.dumps(settings))
         global current_nr_epochs, batch_size
         current_nr_epochs = settings["nr_epochs"]
         batch_size = settings["batch_size"]
+        global architecture
+        architecture = settings["architecture"]
+        global create_or_update
+        previous_create_or_update = create_or_update
+        create_or_update = settings["create_or_update"]
         epochs = [] if not trainable else trainable.getEpochs()
+        global model_details, model_url, model_filename
+        if previous_create_or_update != create_or_update:
+            model_details = ""
+            model_url = ""
+            model_filename = ""
+            # should maybe delete uploaded model?
+        if create_or_update == "create":
+            model_details = {"architecture":architecture}
+            model_url = ""
+            model_filename = ""
 
-        svg = ChartUtils.createAccuracyChart(epochs, current_start_epoch+current_nr_epochs)
-        global accuracy_chart_html
-        accuracy_chart_html = str(svg, "utf-8")
+        updateChart(epochs, current_start_epoch+current_nr_epochs)
         return jsonify({})
 
     @staticmethod
-    @train_blueprint.route('/create_model.json', methods=['POST'])
-    def create_model():
+    @train_blueprint.route('/update_chart_type.json', methods=['POST'])
+    def update_chart_type():
         settings = request.json
+        global chart_type
+        chart_type = settings["chart_type"]
+        epochs = [] if not trainable else trainable.getEpochs()
+        updateChart(epochs, current_start_epoch + current_nr_epochs)
+        return jsonify({})
 
-        model_dir = os.path.join(current_app.config["WORKSPACE_DIR"], "model")
-        if os.path.isdir(model_dir):
-            shutil.rmtree(model_dir)
-        os.makedirs(model_dir)
-
-        global model_path, trainable, current_start_epoch
-        model_path = os.path.join(model_dir, "model.h5")
-
-        trainable = Trainable()
-        trainable.createEmpty(model_path,train_classes,settings)
-        trainable.saveModel()
-
-        current_start_epoch = 0
-
-        svg = ChartUtils.createAccuracyChart([], current_nr_epochs)
-        global accuracy_chart_html
-        accuracy_chart_html = str(svg, "utf-8")
-
-        metadata = read_metadata(model_path)
-        del metadata["epochs"]
-        return jsonify({"model_details":metadata,"url":"models/model.h5","filename":"model.h5"})
 
     @staticmethod
     @train_blueprint.route('/model_upload/<path:path>', methods=['POST'])
@@ -232,59 +307,35 @@ class TrainBlueprint(object):
         model_path = os.path.join(model_dir, path)
         open(model_path, "wb").write(request.data)
 
-        trainable = Trainable()
+        if len(train_classes) > 1:
+            trainable = TrainableClassifier()
+        else:
+            trainable = TrainableAutoEncoder()
         trainable.open(model_path)
         current_start_epoch = len(trainable.getEpochs())
 
-        svg = ChartUtils.createAccuracyChart(trainable.getEpochs(), current_start_epoch + current_nr_epochs)
-        global accuracy_chart_html
-        accuracy_chart_html = str(svg, "utf-8")
+        updateChart(trainable.getEpochs(), current_start_epoch + current_nr_epochs)
 
         metadata = read_metadata(model_path)
         del metadata["epochs"]
-        return jsonify({"model_details":metadata,"url":"models/"+path,"filename":path})
+        global model_details, model_url, model_filename
+        model_details = metadata
+        model_url = "models/"+path
+        model_filename = path
+        return jsonify({})
 
-    ####################################################################################################################
-    # Service static files
-    #
-
-    # @staticmethod
-    # @app.route('/', methods=['GET'])
-    # @app.route('/index.html', methods=['GET'])
-    # def fetch():
-    #     """Serve the main page containing the form"""
-    #     return send_from_directory('static','index.html')
-    #
-    # @staticmethod
-    # @app.route('/css/<path:path>',methods = ['GET'])
-    # def send_css(path):
-    #     """serve CSS files"""
-    #     return send_from_directory('static/css', path)
-    #
-    # @staticmethod
-    # @app.route('/js/<path:path>', methods=['GET'])
-    # def send_js(path):
-    #     """serve JS files"""
-    #     return send_from_directory('static/js', path)
-    #
-    # @staticmethod
-    # @app.route('/images/<path:path>', methods=['GET'])
-    # def send_images(path):
-    #     """serve image files"""
-    #     return send_from_directory('static/images', path)
-    #
-    # @staticmethod
-    # @app.route('/favicon.ico', methods=['GET'])
-    # def send_favicon():
-    #     """serve favicon"""
-    #     return send_from_directory('static/images', 'favicon.ico')
-    #
-    # @app.after_request
-    # def add_header(r):
-    #     r.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
-    #     r.headers["Pragma"] = "no-cache"
-    #     r.headers["Expires"] = "0"
-    #     return r
+    @staticmethod
+    @train_blueprint.route('/view_code', methods=['GET'])
+    def send_code():
+        if architecture and train_classes:
+            cf = CodeFormatter()
+            if len(train_classes) != 1:
+                html = cf.formatHTML(TrainableClassifier.getCode(architecture))
+            else:
+                html = cf.formatHTML(TrainableAutoEncoder.getCode(architecture))
+            return html
+        else:
+            return "Select training data and model options to view training code"
 
 
 

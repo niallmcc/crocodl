@@ -39,7 +39,6 @@
             <div class="one-half column">
                 <select id="architectures">
                 </select>
-                <input type="button" id="create_model_button" value="Create"/>
             </div>
         </div>
         <div class="row">
@@ -58,6 +57,14 @@
         </div>
         <div class="row">
             <div id="model_info">No model defined</div>
+        </div>
+         <div class="row">
+            <div class="one-half column">
+                Download Link:
+            </div>
+            <div class="one-half column">
+                <a id="model_download">(No model to download)</a>
+            </div>
         </div>
     </fieldset>
     <fieldset>
@@ -85,6 +92,7 @@
                     <input class="button-primary" type="button" id="train_button" value="Start training" />
                     <span id="training_status"></span>
                 </label>
+                <a href="view_code" target="_blank">View Code</a>
             </div>
             <div class="one-half column">
                 <label for="training_progress">Training Progress
@@ -94,19 +102,12 @@
             </div>
         </div>
         <div class="row">
-            <div class="column">
-                <iframe width="100%" height="450" id="training_graph" src="training_accuracy_chart.html"></iframe>
-            </div>
+            <select id="chart_types">
+            </select>
         </div>
-    </fieldset>
-    <fieldset>
-        <legend>Download Model</legend>
         <div class="row">
-            <div class="one-half column">
-                Download Link:
-            </div>
-            <div class="one-half column">
-                <a id="model_download">(No model to download)</a>
+            <div class="column">
+                <iframe width="100%" height="450" id="training_graph" src="training_chart.html"></iframe>
             </div>
         </div>
     </fieldset>
