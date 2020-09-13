@@ -1,5 +1,7 @@
 # crocoDL
 
+<img src="https://raw.githubusercontent.com/niallmcc/crocodl/master/crocodl_logo.png" width="512" />
+
 Simple and easy to use Deep Learning avoiding the need for a GPU or powerful hardware.  
 
 Powered by Tensorflow 2.0, Keras API
