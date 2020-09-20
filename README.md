@@ -2,7 +2,9 @@
 
 <img src="https://raw.githubusercontent.com/niallmcc/crocodl/master/crocodl_logo.png" width="512" />
 
-Simple and easy to use Deep Learning avoiding the need for a GPU or powerful hardware.  
+WARNING - Alpha status - not ready for general use
+
+Simple and easy to use Deep Learning avoiding the need for a GPU or powerful hardware (and reducing the carbon footprint) 
 
 Powered by Tensorflow 2.0, Keras API
 
@@ -10,6 +12,8 @@ Currently supports:
 
 * Image Classification (with transfer learning, based on VGG16 or MobileNetV2)
 * Image Search (using image embeddings computed using VGG16 or MobileNetV2)
+* Fancy image effects with style transfer
+* One-class classification with autoencoders (COMING SOON)
 
 ## Installation
 
@@ -37,15 +41,15 @@ sudo apt-get install libhdf5-dev
 (cd data; unzip dogs_vs_cats.zip)
 ```
 
+## Start the service
+
+```
+python3 -m crocodl.image.web.app --port 9099 --noclient
+```
+
 ## Train a Classification Model 
 
-This service allows you to train a model to classify images.
-
-Start a classification service and open its web page (which should happen automatically):
-
-```
-python3 -m simpledl.image.web.train_service
-```
+This service allows you to train a model to classify images.  Go to `http://localhost:9099/train_classifier/index.html`
 
 * First, in the `Data Settings` section, load the zip file containing the image files to train with.  Press the `Browse` button and select the data zip.  
 
@@ -100,11 +104,7 @@ When each epoch completes, the training chart will be updated with the model acc
 
 This service allows you to make predictions with a pre-trained image classification model.
 
-Start a scoring service and open its web page (which should happen automatically):
-
-```
-python3 -m simpledl.image.web.score_service
-```
+Go to `http://localhost:9099/score_classifier/index.html`
 
 * In the `Model Settings` section select the model to be used to classify the image.  This model will have been downloaded from the classifier service (see above).
 
@@ -112,15 +112,15 @@ python3 -m simpledl.image.web.score_service
 
 * When a model and image have been selected, the predicted classes will be listed in order of decreasing score.
 
+## One class classification
+
+Coming soon
+
 ## Search for similar images
 
 This service allows you to create and search through a database of images to try to find those considered similar by the model to a candidate image.
 
-Start a search service and open its web page (which should happen automatically):
-
-```
-python3 -m simpledl.image.web.search_service
-```
+Go to `http://localhost:9099/search/index.html`
 
 * First use `Create Database` or `Upload Database` in the `Database` section to pick the database to use.
 
@@ -140,11 +140,7 @@ This service allows you to alter an image by borrowing the *style* from a differ
 
 For more details of the approach used please see https://arxiv.org/abs/1508.06576
 
-Start a style transfer service and open its web page (which should happen automatically):
-
-```
-python3 -m simpledl.image.web.style_transfer_app
-```
+Go to `http://localhost:9099/search/index.html`
 
 * First, in the `Input Images` section, upload the image to transform and the image from which the style is to be borrowed from your computer.  
 

@@ -28,7 +28,7 @@ class StyleTransfer(object):
                         "--iter",str(iter),
                         "--content_weight",str(content_weight),
                         "--style_weight", str(style_weight),
-                        "--tv_weight",str(tv_weight),">","/tmp/t.t"]
+                        "--tv_weight",str(tv_weight)]
         self.proc = subprocess.Popen(args,cwd=self.folder)
         running = True
         while running:
