@@ -15,11 +15,21 @@
         <legend>Data Settings</legend>
         <div class="row">
             <div class="one-half column">
-                <label for="upload_data_file">Choose Training Data Zip to Upload</label>
+                <label for="upload_training_data_file">Choose Training Data Zip to Upload</label>
             </div>
             <div class="one-half column">
-                <input type="file" id="upload_data_file"/>
-                <progress id="upload_data_progress" min="0" max="100" value="0" style="display:none;">0% complete
+                <input type="file" id="upload_training_data_file"/>
+                <progress id="upload_training_data_progress" min="0" max="100" value="0" style="display:none;">0% complete
+                </progress>
+            </div>
+        </div>
+        <div class="row">
+            <div class="one-half column">
+                <label for="upload_testing_data_file">Choose Testing Data Zip to Upload</label>
+            </div>
+            <div class="one-half column">
+                <input type="file" id="upload_testing_data_file"/>
+                <progress id="upload_testing_data_progress" min="0" max="100" value="0" style="display:none;">0% complete
                 </progress>
             </div>
         </div>

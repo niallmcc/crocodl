@@ -5,7 +5,9 @@ from flask import request, send_from_directory, jsonify
 train_classifier_blueprint = Blueprint('train_classifier_blueprint', __name__)
 
 class ClassifierTrainer(Trainer):
-    pass
+
+    def getType(self):
+        return "classifier"
 
 class TrainClassifierRouter(object):
 

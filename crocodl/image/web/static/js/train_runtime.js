@@ -24,7 +24,9 @@ class TrainRuntime extends Runtime {
     constructor() {
         super();
         var that = this;
-        this.fileInput = $("upload_data_file");
+        this.fileInputTraining = $("upload_training_data_file");
+        this.fileInputTesting = $("upload_testing_data_file");
+
         this.dataInfo = $("data_info");
         this.modelInfo = $("model_info");
         this.architectures = $("architectures");
@@ -45,12 +47,24 @@ class TrainRuntime extends Runtime {
 
         this.epoch = 0;
 
-        this.fileInput.onchange = function() {
-            that.setDataInfo("Uploading data...");
-            var files = that.fileInput.files;
+        this.fileInputTraining.onchange = function() {
+            that.setDataInfo("Uploading training data...");
+            var files = that.fileInputTraining.files;
             for (var i = 0; i < files.length; i++) {
                 var file = files[i];
-                that.upload(file, 'data_upload/', 'upload_data_progress',function(result) {
+                that.upload(file, 'data_upload/training/', 'upload_training_data_progress',function(result) {
+                    that.updateTrainingSettings();
+                    that.checkStatus();
+                });
+            }
+        }
+
+        this.fileInputTesting.onchange = function() {
+            that.setDataInfo("Uploading testing data...");
+            var files = that.fileInputTesting.files;
+            for (var i = 0; i < files.length; i++) {
+                var file = files[i];
+                that.upload(file, 'data_upload/testing/', 'upload_testing_data_progress',function(result) {
                     that.updateTrainingSettings();
                     that.checkStatus();
                 });
@@ -138,11 +152,13 @@ class TrainRuntime extends Runtime {
             this.train_button.disabled = true;
             this.modelInput.disabled = true;
             this.architectures.disabled = true;
-            this.fileInput.disabled = true;
+            this.fileInputTraining.disabled = true;
+            this.fileInputTesting.disabled = true;
             this.create_model.disabled = true;
             this.upload_model.disabled = true;
         } else {
-            this.fileInput.disabled = false;
+            this.fileInputTraining.disabled = false;
+            this.fileInputTesting.disabled = false;
             this.create_model.disabled = !this.data_ready;
             this.upload_model.disabled = !this.data_ready;
             this.train_button.setAttribute("class","button-primary");

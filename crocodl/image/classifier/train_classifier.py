@@ -1,22 +1,25 @@
-# Copyright 2020 Niall McCarroll
+#    Copyright (C) 2020 crocoDL developers
 #
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
+#   Permission is hereby granted, free of charge, to any person obtaining a copy of this software
+#   and associated documentation files (the "Software"), to deal in the Software without
+#   restriction, including without limitation the rights to use, copy, modify, merge, publish,
+#   distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the
+#   Software is furnished to do so, subject to the following conditions:
 #
-#    http://www.apache.org/licenses/LICENSE-2.0
+#   The above copyright notice and this permission notice shall be included in all copies or
+#   substantial portions of the Software.
 #
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+#   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING
+#   BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+#   NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+#   DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+#   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 import argparse
 import os
 
-from crocodl.utils.httputils import StatusServer, XCallback
-from crocodl.utils.mobilenetv2_utils import ModelUtils
+from crocodl.runtime.http_utils import StatusServer, XCallback
+from crocodl.runtime.keras.mobilenetv2_utils import ModelUtils
 
 class ImageClassifierTrainer(object):
 
@@ -30,18 +33,20 @@ class ImageClassifierTrainer(object):
 
         utils = ModelUtils(architecture)
         if os.path.exists(self.model_path):
-            model = utils.load(self.model_path)
+            metadata,model = utils.load(self.model_path)
+            metrics = metadata["metrics"]
         else:
-            model = utils.createTransferModel()
+            model = utils.createModel()
+            metrics = []
 
         train_it = utils.getInputIterator(training_folder, batch_size=batch_size)
         test_it = utils.getInputIterator(validation_folder, batch_size=batch_size)
 
-        cb = XCallback()
+        cb = XCallback(metrics)
         callbacks = [cb]
 
         model.fit(train_it, validation_data=test_it, epochs=epochs, verbose=1, callbacks=callbacks)
-        utils.save(model,self.model_path,cb.getLogs(), classes)
+        utils.save(model,self.model_path,cb.getMetrics(), classes)
 
 if __name__ == '__main__':
 

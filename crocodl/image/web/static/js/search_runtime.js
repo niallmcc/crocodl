@@ -25,17 +25,17 @@ class SearchRuntime extends Runtime {
         super();
         var that = this;
 
-        this.training = false;
+        this.loading = false;
         this.searching = false;
         this.image_uploaded = false;
         this.database_ready = false;
         this.search_ready = false;
 
-        this.trainInfo = $("train_info");
-        this.trainInput = $("upload_images_file");
-        this.trainImage = $("train_image");
-        this.trainMonitor = $("train_monitor");
-        this.trainFileName = $("train_file_name");
+        this.loadInfo = $("load_info");
+        this.loadInput = $("upload_images_file");
+        this.loadImage = $("load_image");
+        this.loadMonitor = $("load_monitor");
+        this.loadFileName = $("load_file_name");
         this.imageInput = $("upload_image_file");
         this.image = $("image");
         this.searchTableBody = $("search_table_body");
@@ -50,13 +50,13 @@ class SearchRuntime extends Runtime {
         this.architectures = $("architectures");
         this.createDatabaseButton = $("create_database_button");
 
-        this.trainInput.onchange = function() {
-            that.setTrainInfo("Adding images...");
-            var files = that.trainInput.files;
+        this.loadInput.onchange = function() {
+            that.setLoadInfo("Adding images...");
+            var files = that.loadInput.files;
             for (var i = 0; i < files.length; i++) {
                 var file = files[i];
                 that.upload(file, 'images_upload/', 'upload_images_progress',function(result) {
-                    that.training = true;
+                    that.loading = true;
                     that.refreshControls();
                     that.checkStatus();
                 });
@@ -128,7 +128,7 @@ class SearchRuntime extends Runtime {
 
     search() {
         this.clearSearchResults();
-        if (!this.training && !this.searching) {
+        if (!this.loading && !this.searching) {
             this.setSearchInfo("Starting search...");
             var that = this;
             this.searching = true;
@@ -205,12 +205,12 @@ class SearchRuntime extends Runtime {
         this.searchInfo.appendChild(document.createTextNode(txt));
     }
 
-    setTrainInfo(txt,latest_image,latest_filename) {
-        this.trainInfo.innerHTML="";
-        this.trainInfo.appendChild(document.createTextNode(txt));
-        this.trainImage.setAttribute("src",latest_image);
-        this.trainFileName.innerHTML = "";
-        this.trainFileName.appendChild(document.createTextNode(latest_filename));
+    setLoadInfo(txt,latest_image,latest_filename) {
+        this.loadInfo.innerHTML="";
+        this.loadInfo.appendChild(document.createTextNode(txt));
+        this.loadImage.setAttribute("src",latest_image);
+        this.loadFileName.innerHTML = "";
+        this.loadFileName.appendChild(document.createTextNode(latest_filename));
     }
 
     checkStatus() {
@@ -221,8 +221,8 @@ class SearchRuntime extends Runtime {
             })
             .then((status) => {
                 that.updateStatus(status);
-                // if still training or searching, schedule another check
-                if (status["training"] || status["searching"]) {
+                // if still loading or searching, schedule another check
+                if (status["loading"] || status["searching"]) {
                     setTimeout(function() {
                         that.checkStatus();
                     },1000);
@@ -231,7 +231,7 @@ class SearchRuntime extends Runtime {
     }
 
     updateStatus(status) {
-        this.training = status["training"];
+        this.loading = status["loading"];
         this.searching = status["searching"];
         this.image_uploaded = status["image_uploaded"];
         this.database_ready = status["database_ready"];
@@ -243,18 +243,18 @@ class SearchRuntime extends Runtime {
         var search_status = status["search_progress"];
         this.setSearchInfo(search_status);
 
-        var train_status = status["train_progress"];
-        var train_image = "";
-        var train_file_name = "";
-        if (this.training && status["train_image"] && status["train_file_name"]) {
-            train_image = status["train_image"];
-            train_file_name = status["train_file_name"];
-            this.trainMonitor.setAttribute("style","display:block;");
+        var load_status = status["load_progress"];
+        var load_image = "";
+        var load_file_name = "";
+        if (this.loading && status["latest_load_image"] && status["latest_load_path"]) {
+            load_image = status["latest_load_image"];
+            load_file_name = status["latest_load_path"];
+            this.loadMonitor.setAttribute("style","display:block;");
         } else {
-            this.trainMonitor.setAttribute("style","display:none;");
+            this.loadMonitor.setAttribute("style","display:none;");
         }
 
-        this.setTrainInfo(train_status,train_image,train_file_name);
+        this.setLoadInfo(load_status,load_image,load_file_name);
 
         if (status["search_results"]) {
             this.showSearchResults(status["search_results"]);
@@ -268,7 +268,7 @@ class SearchRuntime extends Runtime {
     }
 
     refreshControls() {
-        if (this.training || this.searching) {
+        if (this.loading || this.searching) {
             /* database controls */
             this.databaseInput.disabled = true;
             this.createDatabase.disabled = true;
@@ -276,8 +276,8 @@ class SearchRuntime extends Runtime {
             this.createDatabaseButton.disabled = true;
             this.architectures.disabled = true;
 
-            /* training controls */
-            this.trainInput.disabled = true;
+            /* loading controls */
+            this.loadInput.disabled = true;
 
             /* search controls */
             this.searchButton.setAttribute("class","");
@@ -298,9 +298,9 @@ class SearchRuntime extends Runtime {
                 this.databaseLink.setAttribute("style","display:none;");
             }
 
-            /* training controls */
+            /* loading controls */
             console.log(this.database_ready);
-            this.trainInput.disabled = !this.database_ready;
+            this.loadInput.disabled = !this.database_ready;
 
             /* search controls */
             this.imageInput.disabled = false;

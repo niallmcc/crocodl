@@ -5,7 +5,9 @@ from flask import request, send_from_directory, jsonify
 train_autoencoder_blueprint = Blueprint('train_autoencoder_blueprint', __name__)
 
 class AutoencoderTrainer(Trainer):
-    pass
+
+    def getType(self):
+        return "autoencoder"
 
 class TrainAutoencoderRouter(object):
 
