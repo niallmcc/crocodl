@@ -20,15 +20,15 @@ from PIL import Image
 from crocodl.runtime.h5_utils import read_metadata
 from crocodl.runtime.score_utils import ScoreServer
 
-from crocodl.runtime.keras.autoencoder_utils import ModelUtils
+from crocodl.runtime.model_utils import createModelUtils
 
 class ImageAutoencoderScore(object):
 
     def __init__(self, model_path):
         self.model_path = model_path
         self.metadata = read_metadata(self.model_path)
-        self.model_utils = ModelUtils(self.metadata["architecture"])
-        self.model = self.model_utils.load(model_path)
+        self.model_utils = createModelUtils(self.metadata["architecture"])
+        _,self.model = self.model_utils.load(model_path)
 
     def score(self, image_path):
         img = Image.open(image_path)

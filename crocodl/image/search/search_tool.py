@@ -7,7 +7,7 @@ from crocodl.runtime.image_store import ImageStore
 from crocodl.runtime.image_utils import ImageUtils
 from crocodl.runtime.http_utils import StatusServer, set_status
 
-from crocodl.runtime.keras.mobilenetv2_utils import ModelUtils
+from crocodl.runtime.model_utils import createModelUtils
 
 class SearchTool(object):
 
@@ -27,7 +27,7 @@ class SearchTool(object):
             self.imagestore.setArchitecture(self.architecture)
 
         self.architecture = self.imagestore.getArchitecture()
-        self.model_utils = ModelUtils(self.architecture)
+        self.model_utils = createModelUtils(self.architecture)
         self.embedding_model = self.model_utils.createEmbeddingModel()
 
     def search(self,image_path):
@@ -58,7 +58,8 @@ class SearchTool(object):
                     if counter % 10 == 0:
                         set_status({"status":"Loaded %d images"%(counter),
                                     "latest_image_path":relpath,
-                                    "latest_image_uri":ImageUtils.ImageToDataUri(image, 160)})
+                                    "latest_image_uri":ImageUtils.ImageToDataUri(image, 160),
+                                    "database_size":len(self.imagestore)})
                 except Exception as ex:
                     print(str(ex))
         self.imagestore.close()

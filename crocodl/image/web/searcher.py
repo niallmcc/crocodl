@@ -41,15 +41,15 @@ class LoadThread(threading.Thread):
 
     def run(self):
         self.searcher.loading = True
-        self.searcher.get_searchable().load(self.data_dir, lambda s,p,i:self.progress_cb(s,p,i))
+        self.searcher.get_searchable().load(self.data_dir, lambda s,p,i,ds:self.progress_cb(s,p,i,ds))
         self.searcher.loading = False
-        self.update_db_info()
+        self.searcher.load_complete()
 
-    def progress_cb(self,progress,latest_path,latest_image):
+    def progress_cb(self,progress,latest_path,latest_image,database_size):
         self.searcher.load_progress = progress
         self.searcher.latest_load_path = latest_path
         self.searcher.latest_load_image = latest_image
-        self.update_db_info()
+        self.searcher.set_database_size(database_size)
 
     def update_db_info(self):
         self.searcher.database_info = "%s (%d images)" % (self.searcher.architecture, -1)
@@ -90,6 +90,7 @@ class Searcher(object):
         self.latest_load_image = ""
         self.database_ready = False
         self.search_dir = ""
+        self.database_size = 0
 
 
     logger = createLogger("searcher")
@@ -175,10 +176,16 @@ class Searcher(object):
 
         imagestore = ImageStore(self.imagestore_path)
         self.architecture = imagestore.getArchitecture()
-        self.database_info = "%s (%d images)" % (self.architecture, len(imagestore))
+        self.database_size = len(imagestore)
+        self.database_info = self.refresh_database_info()
         self.imagestore_url = "database/"+path
         self.database_ready = True
         return {}
+
+    def load_complete(self):
+        imagestore = ImageStore(self.imagestore_path)
+        self.database_size = len(imagestore)
+        self.database_info = self.refresh_database_info()
 
     def create_database(self,settings):
         self.architecture = settings["architecture"]
@@ -191,8 +198,8 @@ class Searcher(object):
 
         image_store = ImageStore(self.imagestore_path)
         image_store.setArchitecture(self.architecture)
-
-        self.database_info = "%s (%d images)" % (image_store.getArchitecture(), len(image_store))
+        self.database_size = len(image_store)
+        self.database_info = self.refresh_database_info()
         self.database_ready = True
         self.imagestore_url = "database/imagesearch.db"
         return {}
@@ -229,4 +236,9 @@ class Searcher(object):
         else:
             return "to view code, first create or upload database"
 
+    def set_database_size(self,database_size):
+        self.database_size = database_size
+        self.refresh_database_info()
 
+    def refresh_database_info(self):
+        return "%s (%d images)" % (self.architecture, self.database_size)

@@ -18,7 +18,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SO
 */
 
 runtime = null;
-function boot_runtime() {
+function boot_search_runtime() {
     runtime = new SearchRuntime();
 }
 

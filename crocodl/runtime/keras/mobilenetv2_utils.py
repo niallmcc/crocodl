@@ -25,7 +25,7 @@ from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from crocodl.runtime.image_utils import ImageUtils
 from crocodl.runtime.h5_utils import add_metadata, read_metadata
 
-class ModelUtils(object):
+class MobilenetModelUtils(object):
 
     MNET_224 = "MobileNetV2 224x224"
     MNET_192 = "MobileNetV2 192x192"
@@ -33,17 +33,29 @@ class ModelUtils(object):
     MNET_128 = "MobileNetV2 128x128"
     MNET_96 = "MobileNetV2 96x96"
 
+    @staticmethod
+    def createModelUtils(architecture_name):
+        return MobilenetModelUtils(architecture_name)
+
+    @staticmethod
+    def getArchitectureNames():
+        return [MobilenetModelUtils.MNET_224,
+                MobilenetModelUtils.MNET_192,
+                MobilenetModelUtils.MNET_160,
+                MobilenetModelUtils.MNET_128,
+                MobilenetModelUtils.MNET_96]
+
     def __init__(self,architecture_name):
         self.architecture_name = architecture_name
-        if architecture_name == ModelUtils.MNET_224:
+        if architecture_name == MobilenetModelUtils.MNET_224:
             self.image_size = 224
-        elif architecture_name == ModelUtils.MNET_192:
+        elif architecture_name == MobilenetModelUtils.MNET_192:
             self.image_size = 192
-        elif architecture_name == ModelUtils.MNET_160:
+        elif architecture_name == MobilenetModelUtils.MNET_160:
              self.image_size = 160
-        elif architecture_name == ModelUtils.MNET_128:
+        elif architecture_name == MobilenetModelUtils.MNET_128:
             self.image_size = 128
-        elif architecture_name == ModelUtils.MNET_96:
+        elif architecture_name == MobilenetModelUtils.MNET_96:
             self.image_size = 96
         else:
             raise Exception("Architecture %s not recognised")

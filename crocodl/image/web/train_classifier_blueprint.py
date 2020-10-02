@@ -24,9 +24,9 @@ class TrainClassifierRouter(object):
         return jsonify(TrainClassifierRouter.instance.get_status())
 
     @staticmethod
-    @train_classifier_blueprint.route('/training_chart.html', methods=['GET'])
-    def get_training_chart():
-        return TrainClassifierRouter.instance.get_training_chart()
+    @train_classifier_blueprint.route('/training_report.html', methods=['GET'])
+    def get_training_report():
+        return TrainClassifierRouter.instance.get_training_report()
 
     @staticmethod
     @train_classifier_blueprint.route('/models/<path:path>', methods=['GET'])
@@ -58,3 +58,29 @@ class TrainClassifierRouter(object):
     @train_classifier_blueprint.route('/view_code', methods=['GET'])
     def send_code():
         return TrainClassifierRouter.instance.send_code()
+
+    @staticmethod
+    @train_classifier_blueprint.route('/score.json', methods=['POST'])
+    def score():
+        return jsonify(TrainClassifierRouter.instance.score())
+
+    @staticmethod
+    @train_classifier_blueprint.route('/image_upload/<path:path>', methods=['POST'])
+    def upload_image(path):
+        return jsonify(TrainClassifierRouter.instance.upload_image(path, request.data))
+
+    @staticmethod
+    @train_classifier_blueprint.route('/score_image/<path:path>', methods=['GET'])
+    def send_scoreimage(path):
+        (image_dir, path) = TrainClassifierRouter.instance.send_scoreimage(path)
+        return send_from_directory(image_dir, path)
+
+    @staticmethod
+    @train_classifier_blueprint.route('/view_score_code', methods=['GET'])
+    def send_score_code():
+        return TrainClassifierRouter.instance.send_score_code()
+
+    @staticmethod
+    @train_classifier_blueprint.route('/cancel', methods=['POST'])
+    def cancel():
+        return jsonify({"cancelled":TrainClassifierRouter.instance.cancel()})

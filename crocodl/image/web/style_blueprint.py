@@ -110,7 +110,7 @@ class StyleBlueprint(object):
         global r
         if r != None:
             r.cancel()
-        return jsonify(True)
+        return jsonify({"cancelled":True})
 
     @staticmethod
     @style_blueprint.route('/base_image_upload/<path:path>', methods=['POST'])

@@ -50,4 +50,62 @@ class Runtime {
         };
         xhr.send(file);
     }
+
+    createChart(metrics,metric_name){
+        var c = document.getElementById('metrics_chart').getContext('2d');
+        c.height = 500;
+
+        var train_metrics = [];
+        var test_metrics = [];
+        var labels = [];
+        for(var idx=0; idx<metrics.length;idx+=1) {
+            labels.push(idx+1);
+            train_metrics.push(metrics[idx][metric_name]);
+            test_metrics.push(metrics[idx]["val_"+metric_name]);
+        }
+
+        var chart = new Chart(c, {
+            type: 'line',
+
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: "training "+metric_name,
+                    borderColor: 'rgb(255,0,0)',
+                    borderWidth: 3.5,
+                    data: train_metrics,
+                    fill: false,
+                    pointRadius: 1.5,
+                    pointHoverRadius: 3.5,
+                    pointBackgroundColor: 'rgb(255,0,0)'
+                },{
+                    label: "test "+metric_name,
+                    borderColor: 'rgb(0,0,255)',
+                    borderWidth: 3.5,
+                    data: test_metrics,
+                    fill: false,
+                    pointRadius: 1.5,
+                    pointHoverRadius: 3.5,
+                    pointBackgroundColor: 'rgb(0,0,255)'
+                }]
+            },
+            options: {
+                  scales: {
+                    xAxes: [{
+                      scaleLabel: {
+                        display: true,
+                        labelString: 'epochs'
+                      }
+                    }],
+                      yAxes: [{
+                      scaleLabel: {
+                        display: true,
+                        labelString: metric_name
+                      }
+                    }]
+                  }
+            }
+
+        });
+    }
 }

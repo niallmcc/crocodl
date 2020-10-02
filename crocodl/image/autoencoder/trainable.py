@@ -25,11 +25,9 @@ import re
 
 from crocodl.runtime.h5_utils import read_metadata
 from crocodl.utils.web.browser import Browser
-from crocodl.utils.code_utils import expand_imports
+from crocodl.utils.code_utils import specialise_imports, expand_imports
 
 class Trainable(object):
-
-	code = ""
 
 	BATCH_SIZE = "batch_size"
 	DEFAULT_BATCH_SIZE = 16
@@ -84,7 +82,7 @@ class Trainable(object):
 		script_path = os.path.join(self.model_folder, "train_autoencoder.py")
 
 		with open(script_path, "w") as f:
-			f.write(Trainable.code)
+			f.write(Trainable.getCode(self.architecture))
 
 		if self.model_path == "":
 			self.model_path = os.path.join(self.model_folder, "model.h5")
@@ -125,6 +123,9 @@ class Trainable(object):
 	def cancel(self):
 		if self.proc is not None:
 			self.proc.terminate()
+			return True
+		else:
+			return False
 
 	def checkStatus(self):
 		try:
@@ -152,12 +153,14 @@ class Trainable(object):
 
 	@staticmethod
 	def getCode(architecture):
-		return Trainable.code
-
-script_src_path = os.path.join(os.path.split(__file__)[0], "train_autoencoder.py")
-code = open(script_src_path,"r").read()
-root_folder = os.path.join(os.path.split(__file__)[0], "..", "..", "..")
-Trainable.code = expand_imports(code,re.compile("from (crocodl\.utils\.[^ ]*) import .*"),root_folder)
+		from crocodl.image.model_registry.registry import Registry
+		factory = Registry.getModel(architecture)
+		script_src_path = os.path.join(os.path.split(__file__)[0], "train_autoencoder.py")
+		code = open(script_src_path, "r").read()
+		root_folder = os.path.join(os.path.split(__file__)[0], "..", "..", "..")
+		code = specialise_imports(factory,code)
+		code = expand_imports(code, re.compile("from (crocodl\.runtime\.[^ ]*) import .*"), root_folder)
+		return code
 
 if __name__ == '__main__':
 	t = Trainable()

@@ -25,11 +25,20 @@ from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from crocodl.runtime.image_utils import ImageUtils
 from crocodl.runtime.h5_utils import add_metadata, read_metadata
 
-class ModelUtils(object):
+
+class VGGModelUtils(object):
 
     def __init__(self,architecture_name):
         self.architecture_name = architecture_name
         self.image_size = 224
+
+    @staticmethod
+    def createModelUtils(architecture_name):
+        return VGGModelUtils(architecture_name)
+
+    @staticmethod
+    def getArchitectureNames():
+        return ["VGG16"]
 
     def load(self,path):
         metadata = read_metadata(path)

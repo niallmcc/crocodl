@@ -17,41 +17,50 @@ DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-runtime = null;
-function boot_runtime() {
-    runtime = new ScoreRuntime();
+score_runtime = null;
+function boot_score_runtime(embedded_in_train) {
+    score_runtime = new ScoreRuntime(embedded_in_train);
 }
 
 class ScoreRuntime extends Runtime {
 
-    constructor() {
+    constructor(embedded_in_train) {
         super();
         var that = this;
-
-        this.modelInfo = $("model_info");
-        this.modelInput = $("upload_model_file");
+        this.embedded_in_train = embedded_in_train;
+        if (this.embedded_in_train) {
+            this.modelInfo = null;
+            this.modelInput = null;
+        } else {
+            this.modelInfo = $("model_info");
+            this.modelInput = $("upload_model_file");
+        }
         this.imageInput = $("upload_image_file");
         this.image = $("image");
         this.score_table = $("score_table");
         this.score_table_body = $("score_table_body");
+        this.score_status = $("score_status");
 
         this.distance_table = $("distance_table");
         this.distance_table_body = $("distance_table_body");
         this.model_uploaded = false;
         this.image_uploaded = false;
-
-        this.modelInput.onchange = function() {
-            var files = that.modelInput.files;
-            for (var i = 0; i < files.length; i++) {
-                var file = files[i];
-                that.upload(file, 'model_upload/', 'upload_model_progress',function(result) {
-                    that.modelInfo.innerHTML="";
-                    that.modelInfo.appendChild(document.createTextNode(JSON.stringify(result)));
-                    that.model_uploaded = true;
-                    that.clearScores();
-                    that.score();
-                });
+        if (this.modelInput) {
+            this.modelInput.onchange = function () {
+                var files = that.modelInput.files;
+                for (var i = 0; i < files.length; i++) {
+                    var file = files[i];
+                    that.upload(file, 'model_upload/', 'upload_model_progress', function (result) {
+                        that.modelInfo.innerHTML = "";
+                        that.modelInfo.appendChild(document.createTextNode(JSON.stringify(result)));
+                        that.model_uploaded = true;
+                        that.clearScores();
+                        that.score();
+                    });
+                }
             }
+        } else {
+            this.model_uploaded = true;
         }
 
         this.imageInput.onchange = function() {
@@ -68,8 +77,15 @@ class ScoreRuntime extends Runtime {
         }
     }
 
+    startScoring() {
+        if (self.score_status) {
+            self.score_status.innerHTML = "Fetching Scores...";
+        }
+    }
+
     score() {
         if (this.image_uploaded && this.model_uploaded) {
+            this.startScoring();
             var that = this;
             this.epoch = 0;
             fetch("score.json", {
@@ -83,8 +99,15 @@ class ScoreRuntime extends Runtime {
                     return response.json();
                 })
                 .then((results) => {
-                    that.showScores(results)
+                    that.endScoring();
+                    that.showScores(results);
                 });
+        }
+    }
+
+    endScoring() {
+        if (self.score_status) {
+            self.score_status.innerHTML = "";
         }
     }
 
@@ -96,7 +119,6 @@ class ScoreRuntime extends Runtime {
     }
 
     showScores(results) {
-        alert(JSON.stringify(results));
         if (results["distance"] != undefined) {
             this.distance_table.setAttribute("style","display:block;");
             var t1 = document.createTextNode(results["distance"].toFixed(3));

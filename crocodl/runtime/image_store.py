@@ -30,10 +30,15 @@ class ImageStore(object):
 		cursor.execute("create table if not exists architecture(name string)")
 		db.commit()
 		self.uncommitted_count = 0
+		self.db = None
+		self.cursor = None
 
 	def __len__(self):
-		db = sqlite3.connect(self.path)
-		cursor = db.cursor()
+		if self.cursor:
+			cursor = self.cursor
+		else:
+			db = sqlite3.connect(self.path)
+			cursor = db.cursor()
 		cursor.execute("select count(*) from embeddings")
 		return cursor.fetchone()[0]
 

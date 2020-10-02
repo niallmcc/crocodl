@@ -16,21 +16,17 @@
 #   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 from crocodl.image.model_registry.capability import Capability
-from crocodl.runtime.keras.mobilenetv2_utils import ModelUtils as MobileNetV2Utils
+from crocodl.runtime.keras.mobilenetv2_utils import MobilenetModelUtils
 from crocodl.image.model_registry.base_models import BaseModel
 
-class MobileNetV2Model(BaseModel, MobileNetV2Utils):
+class MobileNetV2Model(BaseModel):
 
     def __init__(self,architecture_name):
         super().__init__(architecture_name)
 
     @staticmethod
     def getArchitectureNames():
-        return [MobileNetV2Utils.MNET_224,
-                MobileNetV2Utils.MNET_192,
-                MobileNetV2Utils.MNET_160,
-                MobileNetV2Utils.MNET_128,
-                MobileNetV2Utils.MNET_96]
+        return MobilenetModelUtils.getArchitectureNames()
 
     @staticmethod
     def getCapabilities():
@@ -38,21 +34,21 @@ class MobileNetV2Model(BaseModel, MobileNetV2Utils):
 
     @staticmethod
     def getModelUtilsModule():
-        return "crocodl.runtime.keras.mobilenetv2_utils"
+        return ("crocodl.runtime.keras.mobilenetv2_utils","MobilenetModelUtils")
 
-    @staticmethod
-    def getTrainable():
-        from crocodl.image.classifier.trainable import Trainable
-        return Trainable()
-
-    @staticmethod
-    def getScorable():
-        from crocodl.image.classifier.scorable import Scorable
-        return Scorable()
-
-    def createEmbeddingModel(self):
-        from crocodl.runtime.keras.mobilenetv2_utils import ModelUtils
-        return ModelUtils(self.architecture_name).createEmbeddingModel()
+    # @staticmethod
+    # def getTrainable():
+    #     from crocodl.image.classifier.trainable import Trainable
+    #     return Trainable()
+    #
+    # @staticmethod
+    # def getScorable():
+    #     from crocodl.image.classifier.scorable import Scorable
+    #     return Scorable()
+    #
+    # def createEmbeddingModel(self):
+    #     from crocodl.runtime.keras.mobilenetv2_utils import ModelUtils
+    #     return ModelUtils(self.architecture_name).createEmbeddingModel()
 
 
 

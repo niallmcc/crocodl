@@ -24,7 +24,7 @@ from time import sleep
 import re
 
 from crocodl.utils.web.browser import Browser
-from crocodl.utils.code_utils import expand_imports
+from crocodl.utils.code_utils import specialise_imports, expand_imports
 from crocodl.runtime.h5_utils import read_metadata
 
 class Scorable(object):
@@ -83,9 +83,8 @@ class Scorable(object):
 		script_src_path = os.path.join(os.path.split(__file__)[0], "score_classifier.py")
 		code = open(script_src_path, "r").read()
 		root_folder = os.path.join(os.path.split(__file__)[0], "..", "..", "..")
-		code = code.replace("from crocodl.utils.mobilenetv2_utils import ModelUtils",
-							"from %s import ModelUtils" % (factory.getModelUtilsModule()))
-		code = expand_imports(code, re.compile("from (crocodl\.utils\.[^ ]*) import .*"), root_folder)
+		code = specialise_imports(factory,code)
+		code = expand_imports(code, re.compile("from (crocodl\.runtime\.[^ ]*) import .*"), root_folder)
 		return code
 
 if __name__ == '__main__':

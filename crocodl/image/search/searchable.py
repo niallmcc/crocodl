@@ -24,7 +24,7 @@ import sys
 import json
 import requests
 
-from crocodl.utils.code_utils import expand_imports
+from crocodl.utils.code_utils import specialise_imports, expand_imports
 from crocodl.runtime.image_store import ImageStore
 
 class Searchable(object):
@@ -96,7 +96,7 @@ class Searchable(object):
 			if response.status_code == 200:
 				jo = response.json()
 				if progress_cb:
-					progress_cb(jo["status"],jo["latest_image_path"],jo["latest_image_uri"])
+					progress_cb(jo["status"],jo["latest_image_path"],jo["latest_image_uri"],jo["database_size"])
 		except:
 			pass
 
@@ -107,7 +107,6 @@ class Searchable(object):
 		script_src_path = os.path.join(os.path.split(__file__)[0], "search_tool.py")
 		code = open(script_src_path, "r").read()
 		root_folder = os.path.join(os.path.split(__file__)[0], "..", "..", "..")
-		code = code.replace("from crocodl.utils.mobilenetv2_utils import ModelUtils",
-							"from %s import ModelUtils" % (factory.getModelUtilsModule()))
-		code = expand_imports(code, re.compile("from (crocodl\.utils\.[^ ]*) import .*"), root_folder)
+		code = specialise_imports(factory,code)
+		code = expand_imports(code, re.compile("from (crocodl\.runtime\.[^ ]*) import .*"), root_folder)
 		return code

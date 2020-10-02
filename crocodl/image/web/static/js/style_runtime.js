@@ -28,7 +28,6 @@ class StyleRuntime extends Runtime {
         super();
         this.restyleInfo = $("restyle_info");
         this.restyleButton = $("restyle_button");
-        this.cancelButton = $("cancel_button");
         this.restyleProgress = $("restyle_progress");
         this.restyleSelect = $("restyle_select");
         this.restyleSelectParent = $("restyle_select_parent");
@@ -75,11 +74,15 @@ class StyleRuntime extends Runtime {
         }
 
         this.restyleButton.onclick = function() {
-            that.restyle();
-        }
-
-        this.cancelButton.onclick = function() {
-            that.cancel();
+            if (that.restyling) {
+                that.cancel();
+                that.restyling = false;
+                that.restyleButton.value = "Start restyling";
+            } else {
+                that.restyle();
+                that.restyling = true;
+                that.restyleButton.value = "Cancel restyling";
+            }
         }
 
         this.setRestyleOptions([]);
@@ -128,7 +131,7 @@ class StyleRuntime extends Runtime {
             return response.json();
         })
         .then((status) => {
-            if (status) {
+            if (status["cancelled"]) {
                 alert("Cancelled");
             };
         });
@@ -250,23 +253,19 @@ class StyleRuntime extends Runtime {
     }
 
     refreshControls() {
-        if (this.restyling || !this.style_image_uploaded || !this.base_image_uploaded) {
-            this.restyleButton.setAttribute("class","");
-            this.restyleButton.disabled = true;
-        } else {
+        if (this.restyling || (this.style_image_uploaded && this.base_image_uploaded)) {
             this.restyleButton.setAttribute("class","button-primary");
             this.restyleButton.disabled = false;
+        } else {
+            this.restyleButton.setAttribute("class","");
+            this.restyleButton.disabled = true;
         }
         if (this.restyling) {
-            this.cancelButton.setAttribute("class","button-primary");
-            this.cancelButton.disabled = false;
             this.baseImageInput.disabled = true;
             this.styleImageInput.disabled = true;
         } else {
             this.baseImageInput.disabled = false;
             this.styleImageInput.disabled = false;
-            this.cancelButton.setAttribute("class","");
-            this.cancelButton.disabled = true;
         }
     }
 

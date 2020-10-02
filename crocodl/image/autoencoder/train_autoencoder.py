@@ -18,7 +18,7 @@
 import argparse
 import os.path
 
-from crocodl.runtime.keras.autoencoder_utils import ModelUtils
+from crocodl.runtime.model_utils import createModelUtils
 
 # ref https://blog.keras.io/building-autoencoders-in-keras.html
 
@@ -33,7 +33,7 @@ class AutoEncoderTrainer(object):
         self.architecture = architecture
 
     def train(self,training_folder,validation_folder,batch_size,epochs):
-        utils = ModelUtils(self.architecture)
+        utils = createModelUtils(self.architecture)
         train_it = utils.getInputIterator(training_folder,batch_size)
         test_it = utils.getInputIterator(validation_folder,batch_size)
 

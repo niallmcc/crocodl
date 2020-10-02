@@ -4,11 +4,13 @@
     <link rel="stylesheet" href="/css/normalize.css">
     <link rel="stylesheet" href="/css/skeleton.css">
     <link rel="stylesheet" href="/css/custom.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
     <script type="text/javascript" src="/js/runtime.js"></script>
     <script type="text/javascript" src="/js/train_runtime.js"></script>
+    <script type="text/javascript" src="/js/score_runtime.js"></script>
 </head>
 
-<body onload="boot_runtime()">
+<body onload="boot_train_runtime();boot_score_runtime(true);">
 <div class="container">
     <h1>Train an Image Anomaly Model</h1>
     <fieldset>
@@ -117,7 +119,49 @@
         </div>
         <div class="row">
             <div class="column">
-                <iframe width="100%" height="450" id="training_graph" src="training_chart.html"></iframe>
+                <canvas id="metrics_chart"></canvas>
+            </div>
+        </div>
+        <div class="row" id="training_report">
+            <div class="column">
+                <a href="training_report.html" target="_blank">Training Report</a>
+            </div>
+        </div>
+    </fieldset>
+    <fieldset>
+        <legend>Get Anomaly Score for Image</legend>
+        <div class="row">
+            <div class="one-half column">
+                <label for="upload_image_file">Choose Image File</label>
+                <input type="file" id="upload_image_file"/>
+                <div>
+                    <img width="256" id="image"/>
+                </div>
+                <a href="view_score_code" target="_blank">View Code</a>
+            </div>
+            <div class="one-half column">
+                <progress id="upload_image_progress" min="0" max="100" value="0" style="display:none;">0% complete
+                </progress>
+                <div id="score_status"></div>
+                <table id="score_table" style="display:none;">
+                    <thead>
+                        <tr>
+                            <th>Class</th>
+                            <th>Score</th>
+                        </tr>
+                    </thead>
+                    <tbody id="score_table_body">
+                    </tbody>
+                </table>
+                <table id="distance_table" style="display:none;">
+                    <thead>
+                        <tr>
+                            <th>Distance</th>
+                        </tr>
+                    </thead>
+                    <tbody id="distance_table_body">
+                    </tbody>
+                </table>
             </div>
         </div>
     </fieldset>

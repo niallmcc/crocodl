@@ -17,9 +17,9 @@
 
 class BaseModel(object):
 
-    def createClassifier(self, training_classes=2, settings={}):
-        raise NotImplementedError("Classifier")
+    def __init__(self,architecture_name):
+        self.architecture_name = architecture_name
 
-    def createEmbeddingModel(self):
-        raise NotImplementedError("Embedding / Feature Extraction")
+    def getArchitectureName(self):
+        return self.architecture_name
 

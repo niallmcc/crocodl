@@ -17,20 +17,17 @@
 
 from crocodl.image.model_registry.base_models import BaseModel
 from crocodl.image.model_registry.capability import Capability
+from crocodl.runtime.keras.autoencoder_utils import AutoencoderModelUtils
 
-
-class AutoencoderModel(BaseModel, object):
-
-    BASIC1 = "autoencoder_basic1"
-    BASIC2 = "autoencoder_basic2"
+class AutoencoderModel(BaseModel):
 
     def __init__(self,architecture_name):
-        self.architecture_name = architecture_name
-        if architecture_name == AutoencoderModel.BASIC1:
+        super().__init__(architecture_name)
+        if architecture_name == AutoencoderModelUtils.AUTOENCODER_BASIC1:
             self.image_size = 128
             self.stages = 3
             self.filters = 6
-        elif architecture_name == AutoencoderModel.BASIC2:
+        elif architecture_name == AutoencoderModelUtils.AUTOENCODER_BASIC2:
             self.image_size = 256
             self.stages = 4
             self.filters = 6
@@ -44,7 +41,7 @@ class AutoencoderModel(BaseModel, object):
 
     @staticmethod
     def getArchitectureNames():
-        return [AutoencoderModel.BASIC1, AutoencoderModel.BASIC2]
+        return AutoencoderModelUtils.getArchitectureNames()
 
     @staticmethod
     def getCapabilities():
@@ -52,17 +49,17 @@ class AutoencoderModel(BaseModel, object):
 
     @staticmethod
     def getModelUtilsModule():
-        return "crocodl.runtime.keras.autoencoder_utils"
+        return ("crocodl.runtime.keras.autoencoder_utils","AutoencoderModelUtils")
 
-    @staticmethod
-    def getTrainable():
-        from crocodl.image.autoencoder.trainable import Trainable
-        return Trainable()
-
-    @staticmethod
-    def getScorable():
-        from crocodl.image.autoencoder.scorable import Scorable
-        return Scorable()
+    # @staticmethod
+    # def getTrainable():
+    #     from crocodl.image.autoencoder.trainable import Trainable
+    #     return Trainable()
+    #
+    # @staticmethod
+    # def getScorable():
+    #     from crocodl.image.autoencoder.scorable import Scorable
+    #     return Scorable()
 
 
 

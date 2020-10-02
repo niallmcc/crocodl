@@ -22,9 +22,10 @@ import subprocess
 import sys
 import requests
 from time import sleep
+import re
 
 from crocodl.utils.web.browser import Browser
-
+from crocodl.utils.code_utils import specialise_imports, expand_imports
 from crocodl.runtime.h5_utils import read_metadata
 
 class Scorable(object):
@@ -78,14 +79,9 @@ class Scorable(object):
 	def getCode(architecture):
 		script_src_path = os.path.join(os.path.split(__file__)[0], "score_autoencoder.py")
 		code = open(script_src_path, "r").read()
+		root_folder = os.path.join(os.path.split(__file__)[0], "..", "..", "..")
+		from crocodl.image.model_registry.registry import Registry
+		factory = Registry.getModel(architecture)
+		code = specialise_imports(factory,code)
+		code = expand_imports(code, re.compile("from (crocodl\.runtime\.[^ ]*) import .*"), root_folder)
 		return code
-
-if __name__ == '__main__':
-	s = Scorable()
-	s.load("/tmp/model.h5")
-	score = s.score("/home/dev/github/crocodl/data/dogs_vs_cats/train/cats/cat.60.jpg")
-	score2 = s.score("/home/dev/github/crocodl/data/dogs_vs_cats/train/dogs/dog.9822.jpg")
-	print(str(score))
-	print(str(score2))
-
-	s.close()

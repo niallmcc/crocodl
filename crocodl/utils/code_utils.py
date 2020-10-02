@@ -18,7 +18,12 @@
 import os.path
 import re
 
-def expand_imports(src,pattern,root_folder):
+def specialise_imports(model_factory,code):
+    (module_name,class_name) = model_factory.getModelUtilsModule()
+    return code.replace("from crocodl.runtime.model_utils import createModelUtils",
+    					"from %s import %s\ncreateModelUtils = %s.createModelUtils"%(module_name,class_name,class_name))
+
+def expand_imports(src,pattern,root_folder,expanded_filenames=set()):
     lines = src.split("\n")
     for idx in range(len(lines)):
         line = lines[idx]
@@ -26,14 +31,16 @@ def expand_imports(src,pattern,root_folder):
         if matches:
             match = matches[1]
             filename = os.path.join(root_folder,*match.split("."))+".py"
-            s = open(filename,"r").read()
-            s = expand_imports(s,pattern,root_folder)
-            slines = s.split("\n")
-            for jdx in range(len(slines)):
-                if not slines[jdx].startswith("#"):
-                    break
-            s = "\n".join(slines[jdx:])
-            lines[idx] = s
+            if filename not in expanded_filenames:
+                expanded_filenames.add(filename)
+                s = open(filename,"r").read()
+                s = expand_imports(s,pattern,root_folder,expanded_filenames)
+                slines = s.split("\n")
+                for jdx in range(len(slines)):
+                    if not slines[jdx].startswith("#"):
+                        break
+                s = "\n".join(slines[jdx:])
+                lines[idx] = s
     return "\n".join(lines)
 
 if __name__ == '__main__':

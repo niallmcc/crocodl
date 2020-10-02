@@ -25,7 +25,7 @@ import sys
 
 from crocodl.runtime.h5_utils import read_metadata
 from crocodl.image.classifier.scorable import Scorable
-from crocodl.utils.code_utils import expand_imports
+from crocodl.utils.code_utils import specialise_imports, expand_imports
 
 from crocodl.image.model_registry.mobilenetv2_models import MobileNetV2Model
 
@@ -37,7 +37,6 @@ class Trainable(object):
 	DEFAULT_BATCH_SIZE = 16
 
 	ARCHITECTURE = "architecture"
-	DEFAULT_ARCHITECTURE = MobileNetV2Model.MNET_160
 
 	def __init__(self):
 		self.factory = None
@@ -77,6 +76,8 @@ class Trainable(object):
 
 	def train(self,model_folder,train_folder_path,test_folder_path,epoch_callback=None,epochs=5,batch_size=16,completion_callback=None,batch_callback=None):
 		self.model_folder = model_folder
+		self.train_folder = train_folder_path
+		self.test_folder = test_folder_path
 		training_classes = list(sorted(os.listdir(train_folder_path)))
 		if training_classes != self.classes:
 			raise Exception("classes mismatch, unable to train")
@@ -125,6 +126,33 @@ class Trainable(object):
 
 		self.proc = None
 
+	def evaluate(self,report_path):
+		script_path = os.path.join(self.model_folder, "evaluate_classifier.py")
+
+		with open(script_path, "w") as f:
+			f.write(Trainable.getCode(self.architecture,function="evaluate"))
+
+		self.proc = subprocess.Popen([sys.executable, script_path,
+									  "--model_path", self.model_path,
+									  "--train_folder", self.train_folder,
+									  "--validation_folder", self.test_folder,
+									  "--report_path", report_path],
+									 cwd=self.model_folder)
+		running = True
+		while running:
+			try:
+				self.proc.wait(1)
+				running = False
+			except subprocess.TimeoutExpired:
+				pass
+
+	def cancel(self):
+		if self.proc is not None:
+			self.proc.terminate()
+			return True
+		else:
+			return False
+
 	def checkStatus(self):
 		try:
 			response = requests.get("http://localhost:"+str(self.tracker_port))
@@ -164,14 +192,14 @@ class Trainable(object):
 		return scorable
 
 	@staticmethod
-	def getCode(architecture):
+	def getCode(architecture,function="train"):
 		from crocodl.image.model_registry.registry import Registry
 		factory = Registry.getModel(architecture)
-		script_src_path = os.path.join(os.path.split(__file__)[0], "train_classifier.py")
+		script_src_path = os.path.join(os.path.split(__file__)[0], function+"_classifier.py")
 		code = open(script_src_path, "r").read()
 		root_folder = os.path.join(os.path.split(__file__)[0], "..", "..", "..")
-		code = code.replace("from crocodl.utils.mobilenetv2_utils import ModelUtils","from %s import ModelUtils"%(factory.getModelUtilsModule()))
-		code = expand_imports(code, re.compile("from (crocodl\.utils\.[^ ]*) import .*"), root_folder)
+		code = specialise_imports(factory,code)
+		code = expand_imports(code, re.compile("from (crocodl\.runtime\.[^ ]*) import .*"), root_folder)
 		return code
 
 	def __repr__(self):

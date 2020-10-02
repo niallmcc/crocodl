@@ -19,7 +19,7 @@ import argparse
 import os
 
 from crocodl.runtime.http_utils import StatusServer, XCallback
-from crocodl.runtime.keras.mobilenetv2_utils import ModelUtils
+from crocodl.runtime.model_utils import createModelUtils
 
 class ImageClassifierTrainer(object):
 
@@ -31,7 +31,7 @@ class ImageClassifierTrainer(object):
 
         classes = list(sorted(os.listdir(training_folder)))
 
-        utils = ModelUtils(architecture)
+        utils = createModelUtils(architecture)
         if os.path.exists(self.model_path):
             metadata,model = utils.load(self.model_path)
             metrics = metadata["metrics"]

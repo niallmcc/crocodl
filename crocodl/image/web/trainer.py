@@ -29,12 +29,12 @@ from crocodl.utils.web.code_formatter import CodeFormatter
 from crocodl.runtime.h5_utils import read_metadata
 from crocodl.image.classifier.trainable import Trainable as TrainableClassifier
 from crocodl.image.autoencoder.trainable import Trainable as TrainableAutoEncoder
-from crocodl.image.web.chart_utils import ChartUtils
+from crocodl.image.web.scorer import ClassifierScorer, AutoencoderScorer
 
 
 class TrainingThread(threading.Thread):
 
-    def __init__(self,trainer,model_folder,training_folder,testing_folder,trainable,onEpoch,epochs=5,batchSize=16,onCompletion=None,onBatch=None):
+    def __init__(self,trainer,model_folder,training_folder,testing_folder,trainable,onEpoch,epochs=5,batchSize=16,onCompletion=None,onBatch=None,reportPath=None):
         super(TrainingThread,self).__init__(target=self)
         self.trainer = trainer
         self.model_folder = model_folder
@@ -46,9 +46,12 @@ class TrainingThread(threading.Thread):
         self.onCompletion=onCompletion
         self.onBatch=onBatch
         self.trainable = trainable
+        self.report_path = reportPath
 
     def run(self):
         self.trainable.train(self.model_folder,self.training_folder,self.testing_folder,epoch_callback=lambda epoch,metrics:self.progress_cb(epoch,metrics),epochs=self.epochs,batch_size=self.batchSize,completion_callback=self.onCompletion,batch_callback=self.onBatch)
+        if self.report_path:
+            self.trainable.evaluate(self.report_path)
 
     def progress_cb(self,epoch,metrics):
         if self.onEpoch:
@@ -71,6 +74,7 @@ class Trainer(object):
         self.training_folder = ""
         self.testing_folder = ""
         self.data_info = None
+        self.report_path = ""
 
         self.model_details = {}
         self.model_filename = ""
@@ -81,12 +85,7 @@ class Trainer(object):
         self.create_or_update = "create"
         self.batch_size = 16
 
-        self.chart_html = ""
         self.chart_type = "loss"
-        if self.chart_type == "accuracy":
-            self.chart_html = ChartUtils.createAccuracyChart([], 5)
-        else:
-            self.chart_html = ChartUtils.createLossChart([], 5)
         self.chart_types = ["accuracy", "loss"]
 
         self.training = False
@@ -97,12 +96,16 @@ class Trainer(object):
 
         self.current_batch = 0  # number of completed batches in current epoch
 
+        if self.getType() == "classifier":
+            self.scorer = ClassifierScorer()
+        elif self.getType() == "autoencoder":
+            self.scorer = AutoencoderScorer()
+
     logger = createLogger("train_app")
 
     def updateTrainingProgress(self,epoch,metrics):
         self.progress = epoch/self.current_nr_epochs
         self.metrics = metrics
-        self.updateChart(metrics)
 
     def updateTrainingBatch(self,batch):
         self.current_batch = batch
@@ -120,18 +123,18 @@ class Trainer(object):
             self.model_folder = model_dir
 
             self.model_path = os.path.join(model_dir, "model.h5")
-            self.updateChart([])
 
             self.model_details = self.architecture
             self.model_url = "models/model.h5"
             self.model_filename = "model.h5"
-            if len(self.train_classes) > 1:
+            if self.getType() == "classifier":
+                self.report_path = os.path.join(model_dir, "training_report.html")
                 self.trainable = TrainableClassifier()
                 self.trainable.createEmpty(self.model_path, self.train_classes, {TrainableClassifier.ARCHITECTURE: self.architecture})
             else:
                 self.trainable = TrainableAutoEncoder()
                 self.trainable.createEmpty(self.model_path, self.train_classes, {TrainableAutoEncoder.ARCHITECTURE: self.architecture})
-
+        self.scorer.set_model_path(self.model_path)
         self.training_thread = TrainingThread(
             self,
             self.model_folder,
@@ -142,17 +145,25 @@ class Trainer(object):
             epochs=self.current_nr_epochs,
             batchSize=self.batch_size,
             onCompletion=lambda : self.setTrainingCompleted(),
-            onBatch=lambda batch,epoch: self.updateTrainingBatch(batch))
+            onBatch=lambda batch,epoch: self.updateTrainingBatch(batch),
+            reportPath=self.report_path)
 
         self.training = True
         self.training_thread.start()
         return {}
+
+    def get_training_report(self):
+        if self.report_path:
+            return open(self.report_path).read()
+        else:
+            return ""
 
     def get_status(self):
         return {
             "progress":self.progress,
             "training":self.training,
             "epoch":1+len(self.metrics),
+            "metrics":self.metrics,
             "batch":self.current_batch,
             "data_info":self.data_info,
             "model_details":self.model_details,
@@ -167,8 +178,11 @@ class Trainer(object):
             "model_ready": (self.create_or_update == "create" or self.model_filename != "")
         }
 
-    def get_training_chart(self):
-        return self.chart_html
+    def cancel(self):
+        if self.trainable:
+            return self.trainable.cancel()
+        else:
+            return False
 
     def download_model(self,path):
         model_dir = os.path.join(current_app.config["WORKSPACE_DIR"], "model")
@@ -194,7 +208,9 @@ class Trainer(object):
         if self.getType() == "autoencoder":
             # for autoencoder, create an extra directory level to represent a dummy class
             unpack_dir = os.path.join(partition_dir, "auto")
-            unpack_data(upload_path,unpack_dir)
+        else:
+            unpack_dir = partition_dir
+        unpack_data(upload_path,unpack_dir)
 
         if partition == "training":
             self.training_folder = partition_dir
@@ -238,13 +254,11 @@ class Trainer(object):
             self.model_url = ""
             self.model_filename = ""
 
-        self.updateChart(self.metrics)
         return {}
 
     def update_chart_type(self,settings):
         self.chart_type = settings["chart_type"]
         self.metrics = [] if not self.trainable else self.trainable.getMetrics()
-        self.updateChart(self.metrics)
         return {}
 
     def upload_model(self,path,data):
@@ -263,35 +277,37 @@ class Trainer(object):
             self.trainable = TrainableAutoEncoder()
         self.trainable.open(self.model_path)
 
-        self.updateChart(self.trainable.getMetrics())
-
         metadata = read_metadata(self.model_path)
         del metadata["epochs"]
 
         self.model_details = metadata
         self.model_url = "models/"+path
         self.model_filename = path
+        self.scorer.set_model_path(self.model_path)
         return {}
 
-
     def send_code(self):
-        if self.architecture and self.train_classes:
+        if self.architecture:
             cf = CodeFormatter()
-            if len(self.train_classes) != 1:
-                html = cf.formatHTML(TrainableClassifier.getCode(self.architecture))
-            else:
-                html = cf.formatHTML(TrainableAutoEncoder.getCode(self.architecture))
-            return html
-        else:
-            return "Select training data and model options to view training code"
+            if self.getType() == "classifier":
+                return cf.formatHTML(TrainableClassifier.getCode(self.architecture))
+            elif self.getType() == "autoencoder":
+                return cf.formatHTML(TrainableAutoEncoder.getCode(self.architecture))
 
-    def updateChart(self,metrics):
-        nr_epochs = max(len(metrics),self.current_nr_epochs)
-        if self.chart_type == "accuracy":
-            self.chart_html = ChartUtils.createAccuracyChart(metrics,nr_epochs)
-        else:
-            self.chart_html = ChartUtils.createLossChart(metrics,nr_epochs)
+        return "Select model options to view training code"
 
 
+
+    def score(self):
+        return self.scorer.score()
+
+    def upload_image(self,path,data):
+        return self.scorer.upload_image(path,data)
+
+    def send_scoreimage(self,path):
+        return self.scorer.send_scoreimage(path)
+
+    def send_score_code(self):
+        return self.scorer.send_score_code()
 
 

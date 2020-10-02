@@ -18,7 +18,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SO
 */
 
 runtime = null;
-function boot_runtime() {
+function boot_train_runtime() {
     runtime = new TrainRuntime();
 }
 
@@ -39,7 +39,8 @@ class TrainRuntime extends Runtime {
         this.trainingProgress = $("training_progress");
         this.trainingStatus = $("training_status");
         this.chartTypes = $("chart_types");
-        this.trainingGraph = $("training_graph");
+        this.trainingReport = $("training_report");
+
         this.modelDownload = $("model_download");
 
         this.nr_epochs = $("nr_epochs");
@@ -49,6 +50,8 @@ class TrainRuntime extends Runtime {
         this.upload_model = $("upload_model");
 
         this.epoch = 0;
+        this.metrics = [];
+        this.refreshTrainingGraph();
 
         this.fileInputTraining.onchange = function() {
             that.setDataInfo("Uploading training data...");
@@ -88,7 +91,15 @@ class TrainRuntime extends Runtime {
         this.architecture_names = [];
 
         this.train_button.onclick = function() {
-            that.doTrain();
+            if (that.training) {
+                that.cancel();
+                that.train_button.value = "Start training";
+                that.training = false;
+            } else {
+                that.doTrain();
+                that.train_button.value = "Cancel training";
+                that.training = true;
+            }
         }
         this.create_model.onchange = function() {
             that.updateTrainingSettings();
@@ -151,8 +162,9 @@ class TrainRuntime extends Runtime {
 
     refreshControls() {
         if (this.training) {
-            this.train_button.setAttribute("class","");
-            this.train_button.disabled = true;
+            this.train_button.setAttribute("class","button-primary");
+            this.train_button.value = "Cancel training";
+            this.train_button.disabled = false;
             this.modelInput.disabled = true;
             this.architectures.disabled = true;
             this.fileInputTraining.disabled = true;
@@ -160,6 +172,7 @@ class TrainRuntime extends Runtime {
             this.create_model.disabled = true;
             this.upload_model.disabled = true;
         } else {
+            this.train_button.value = "Start training";
             this.fileInputTraining.disabled = false;
             this.fileInputTesting.disabled = false;
             this.create_model.disabled = !this.data_ready;
@@ -264,6 +277,26 @@ class TrainRuntime extends Runtime {
             });
     }
 
+    cancel() {
+        var that = this;
+
+        fetch("cancel", {
+            method: 'POST',
+            cache: 'no-cache',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({})
+        }).then((response) => {
+            return response.json();
+        })
+        .then((status) => {
+            if (status["cancelled"]) {
+                alert("Cancelled");
+            };
+        });
+    }
+
     reportError(msg) {
         alert(msg);
     }
@@ -300,6 +333,7 @@ class TrainRuntime extends Runtime {
         var model_filename = status["model_filename"];
         var model_ready = status["model_ready"];
         var create_or_update = status["create_or_update"];
+        this.metrics = status["metrics"];
         if (create_or_update == "create") {
             this.create_model.checked = true;
         } else {
@@ -309,7 +343,6 @@ class TrainRuntime extends Runtime {
         this.model_ready = model_ready;
 
         this.setModelInfo(JSON.stringify(model_details));
-
 
         var completed_epochs = status["epoch"];
 
@@ -345,7 +378,7 @@ class TrainRuntime extends Runtime {
     }
 
     refreshTrainingGraph() {
-        this.trainingGraph.contentWindow.location.reload(true);
+        this.createChart(this.metrics,this.chartTypes.value);
     }
 
     updateDownloadLink(filename,url) {

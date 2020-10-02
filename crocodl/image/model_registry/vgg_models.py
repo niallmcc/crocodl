@@ -15,20 +15,18 @@
 #   DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 #   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-from crocodl.runtime.keras.vgg_utils import ModelUtils as VGGUtils
+from crocodl.runtime.keras.vgg_utils import VGGModelUtils
 from crocodl.image.model_registry.capability import Capability
 from crocodl.image.model_registry.base_models import BaseModel
-from crocodl.image.classifier.trainable import Trainable
-from crocodl.image.classifier.scorable import Scorable
 
-class VGGModel(BaseModel, VGGUtils):
+class VGGModel(BaseModel):
 
     def __init__(self,architecture_name):
         super().__init__(architecture_name)
 
     @staticmethod
     def getArchitectureNames():
-        return ["VGG16"]
+        return VGGModelUtils.getArchitectureNames()
 
     @staticmethod
     def getCapabilities():
@@ -36,16 +34,16 @@ class VGGModel(BaseModel, VGGUtils):
 
     @staticmethod
     def getModelUtilsModule():
-        return "crocodl.runtime.keras.vgg_utils"
+        return ("crocodl.runtime.keras.vgg_utils","VGGModelUtils")
 
-    @staticmethod
-    def getTrainable():
-        return Trainable()
-
-    @staticmethod
-    def getScorable():
-        return Scorable()
-
-    def createEmbeddingModel(self):
-        from crocodl.runtime.keras.vgg_utils import ModelUtils
-        return ModelUtils(self.architecture_name).createEmbeddingModel()
+    # @staticmethod
+    # def getTrainable():
+    #     return Trainable()
+    #
+    # @staticmethod
+    # def getScorable():
+    #     return Scorable()
+    #
+    # def createEmbeddingModel(self):
+    #     from crocodl.runtime.keras.vgg_utils import ModelUtils
+    #     return ModelUtils(self.architecture_name).createEmbeddingModel()

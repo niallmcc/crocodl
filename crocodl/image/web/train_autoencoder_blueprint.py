@@ -58,3 +58,29 @@ class TrainAutoencoderRouter(object):
     @train_autoencoder_blueprint.route('/view_code', methods=['GET'])
     def send_code():
         return TrainAutoencoderRouter.instance.send_code()
+
+    @staticmethod
+    @train_autoencoder_blueprint.route('/score.json', methods=['POST'])
+    def score():
+        return jsonify(TrainAutoencoderRouter.instance.score())
+
+    @staticmethod
+    @train_autoencoder_blueprint.route('/image_upload/<path:path>', methods=['POST'])
+    def upload_image(path):
+        return jsonify(TrainAutoencoderRouter.instance.upload_image(path, request.data))
+
+    @staticmethod
+    @train_autoencoder_blueprint.route('/score_image/<path:path>', methods=['GET'])
+    def send_scoreimage(path):
+        (image_dir, path) = TrainAutoencoderRouter.instance.send_scoreimage(path)
+        return send_from_directory(image_dir, path)
+
+    @staticmethod
+    @train_autoencoder_blueprint.route('/view_score_code', methods=['GET'])
+    def send_score_code():
+        return TrainAutoencoderRouter.instance.send_score_code()
+
+    @staticmethod
+    @train_autoencoder_blueprint.route('/cancel', methods=['POST'])
+    def cancel():
+        return jsonify({"cancelled":TrainAutoencoderRouter.instance.cancel()})

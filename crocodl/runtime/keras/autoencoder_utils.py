@@ -22,20 +22,30 @@ from tensorflow.keras.layers import Input, Conv2D, MaxPooling2D, UpSampling2D
 from tensorflow.keras.models import Model, load_model
 
 from crocodl.runtime.image_utils import ImageUtils
-from crocodl.runtime.h5_utils import add_metadata
+from crocodl.runtime.h5_utils import add_metadata, read_metadata
 
-class ModelUtils(object):
+
+
+class AutoencoderModelUtils(object):
 
     AUTOENCODER_BASIC1 = "autoencoder_basic1"
     AUTOENCODER_BASIC2 = "autoencoder_basic2"
 
+    @staticmethod
+    def createModelUtils(architecture_name):
+        return AutoencoderModelUtils(architecture_name)
+
+    @staticmethod
+    def getArchitectureNames():
+        return [AutoencoderModelUtils.AUTOENCODER_BASIC1, AutoencoderModelUtils.AUTOENCODER_BASIC2]
+
     def __init__(self,architecture_name):
         self.architecture_name = architecture_name
-        if architecture_name == ModelUtils.AUTOENCODER_BASIC1:
+        if architecture_name == AutoencoderModelUtils.AUTOENCODER_BASIC1:
             self.image_size = 128
             self.stages = 3
             self.filters = 6
-        elif architecture_name == ModelUtils.AUTOENCODER_BASIC2:
+        elif architecture_name == AutoencoderModelUtils.AUTOENCODER_BASIC2:
             self.image_size = 192
             self.stages = 3
             self.filters = 6
@@ -74,7 +84,8 @@ class ModelUtils(object):
         return autoencoder
 
     def load(self,path):
-        return load_model(path)
+        metadata = read_metadata(path)
+        return metadata,load_model(path)
 
     def save(self,model,path,metrics):
         model.save(path)
