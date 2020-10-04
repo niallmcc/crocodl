@@ -27,8 +27,6 @@ from crocodl.runtime.h5_utils import read_metadata
 from crocodl.image.classifier.scorable import Scorable
 from crocodl.utils.code_utils import specialise_imports, expand_imports
 
-from crocodl.image.model_registry.mobilenetv2_models import MobileNetV2Model
-
 from crocodl.utils.web.browser import Browser
 
 class Trainable(object):
@@ -118,15 +116,17 @@ class Trainable(object):
 				self.checkStatus()
 
 		json_path = os.path.join(self.model_folder, "status.json")
+
+		if os.path.exists(json_path):
+			jo = json.loads(open(json_path, "r").read())
+			self.parseResponse(jo)
+
 		if completion_callback:
-			if os.path.exists(json_path):
-				jo = json.loads(open(json_path, "r").read())
-				self.parseResponse(jo)
 			completion_callback()
 
 		self.proc = None
 
-	def evaluate(self,report_path):
+	def evaluate(self,report_path,other_folder=""):
 		script_path = os.path.join(self.model_folder, "evaluate_classifier.py")
 
 		with open(script_path, "w") as f:
@@ -204,13 +204,3 @@ class Trainable(object):
 
 	def __repr__(self):
 		return "(%s, %d classes, %d epochs)"%(self.architecture,len(self.classes),len(self.metrics))
-
-if __name__ == '__main__':
-	t = Trainable()
-	t.createEmpty("/tmp/model.h5",["cats","dogs"],{"architecture":"MobileNetV2 96x96"})
-	t.train(model_folder="/tmp",
-			train_folder_path="/home/dev/github/crocodl/data/dogs_vs_cats/train",
-			test_folder_path="/home/dev/github/crocodl/data/dogs_vs_cats/test",
-			epoch_callback=lambda x,y:print("epoch CB"),
-			batch_callback=lambda x,y:print("batch CB"),
-			completion_callback=lambda:print("completion CB"))

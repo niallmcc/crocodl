@@ -109,16 +109,37 @@ class Trainable(object):
 				self.checkStatus()
 
 		json_path = os.path.join(self.model_folder, "status.json")
+
+		if os.path.exists(json_path):
+			jo = json.loads(open(json_path,"r").read())
+			self.parseResponse(jo)
 		if completion_callback:
-			if os.path.exists(json_path):
-				jo = json.loads(open(json_path,"r").read())
-				self.metrics = jo["metrics"]
-				self.parseResponse(jo)
 			completion_callback()
 		self.proc = None
 
-	def getEpochs(self):
-		return self.epochs
+	def evaluate(self,report_path,other_folder=""):
+		script_path = os.path.join(self.model_folder, "evaluate_autoencoder.py")
+
+		with open(script_path, "w") as f:
+			f.write(Trainable.getCode(self.architecture,function="evaluate"))
+
+		self.proc = subprocess.Popen([sys.executable, script_path,
+									  "--model_path", self.model_path,
+									  "--train_folder", self.train_folder,
+									  "--validation_folder", self.test_folder,
+									  "--other_folder", other_folder,
+									  "--report_path", report_path],
+									 cwd=self.model_folder)
+		running = True
+		while running:
+			try:
+				self.proc.wait(1)
+				running = False
+			except subprocess.TimeoutExpired:
+				pass
+
+	def getMetrics(self):
+		return self.metrics
 
 	def cancel(self):
 		if self.proc is not None:
@@ -152,19 +173,12 @@ class Trainable(object):
 			self.metrics = metrics
 
 	@staticmethod
-	def getCode(architecture):
+	def getCode(architecture,function="train"):
 		from crocodl.image.model_registry.registry import Registry
 		factory = Registry.getModel(architecture)
-		script_src_path = os.path.join(os.path.split(__file__)[0], "train_autoencoder.py")
+		script_src_path = os.path.join(os.path.split(__file__)[0], function+"_autoencoder.py")
 		code = open(script_src_path, "r").read()
 		root_folder = os.path.join(os.path.split(__file__)[0], "..", "..", "..")
 		code = specialise_imports(factory,code)
 		code = expand_imports(code, re.compile("from (crocodl\.runtime\.[^ ]*) import .*"), root_folder)
 		return code
-
-if __name__ == '__main__':
-	t = Trainable()
-	t.createEmpty("", ["cats"], {"architecture":"autoencoder_basic1"})
-	t.train(model_folder="/tmp",
-			train_folder_path="/home/dev/github/crocodl/data/cats/train",
-			test_folder_path="/home/dev/github/crocodl/data/cats/test")

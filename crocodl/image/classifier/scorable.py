@@ -86,10 +86,3 @@ class Scorable(object):
 		code = specialise_imports(factory,code)
 		code = expand_imports(code, re.compile("from (crocodl\.runtime\.[^ ]*) import .*"), root_folder)
 		return code
-
-if __name__ == '__main__':
-	s = Scorable()
-	s.load("/tmp/model.h5")
-	score = s.score("/home/dev/github/crocodl/data/dogs_vs_cats/train/cats/cat.60.jpg")
-	print(str(score))
-	s.close()

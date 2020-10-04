@@ -84,3 +84,8 @@ class TrainAutoencoderRouter(object):
     @train_autoencoder_blueprint.route('/cancel', methods=['POST'])
     def cancel():
         return jsonify({"cancelled":TrainAutoencoderRouter.instance.cancel()})
+
+    @staticmethod
+    @train_autoencoder_blueprint.route('/training_report.html', methods=['GET'])
+    def get_training_report():
+        return TrainAutoencoderRouter.instance.get_training_report()

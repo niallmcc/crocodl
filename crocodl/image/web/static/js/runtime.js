@@ -71,21 +71,23 @@ class Runtime {
                 labels: labels,
                 datasets: [{
                     label: "training "+metric_name,
+                    backgroundColor: 'rgb(255,0,0)',
                     borderColor: 'rgb(255,0,0)',
                     borderWidth: 3.5,
                     data: train_metrics,
                     fill: false,
-                    pointRadius: 1.5,
-                    pointHoverRadius: 3.5,
+                    pointRadius: 3.5,
+                    pointHoverRadius: 6.5,
                     pointBackgroundColor: 'rgb(255,0,0)'
                 },{
                     label: "test "+metric_name,
+                    backgroundColor: 'rgb(0,0,255)',
                     borderColor: 'rgb(0,0,255)',
                     borderWidth: 3.5,
                     data: test_metrics,
                     fill: false,
-                    pointRadius: 1.5,
-                    pointHoverRadius: 3.5,
+                    pointRadius: 3.5,
+                    pointHoverRadius: 6.5,
                     pointBackgroundColor: 'rgb(0,0,255)'
                 }]
             },

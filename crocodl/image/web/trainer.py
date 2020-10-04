@@ -34,12 +34,13 @@ from crocodl.image.web.scorer import ClassifierScorer, AutoencoderScorer
 
 class TrainingThread(threading.Thread):
 
-    def __init__(self,trainer,model_folder,training_folder,testing_folder,trainable,onEpoch,epochs=5,batchSize=16,onCompletion=None,onBatch=None,reportPath=None):
+    def __init__(self,trainer,model_folder,training_folder,testing_folder,other_folder,trainable,onEpoch,epochs=5,batchSize=16,onCompletion=None,onBatch=None,reportPath=None):
         super(TrainingThread,self).__init__(target=self)
         self.trainer = trainer
         self.model_folder = model_folder
         self.training_folder = training_folder
         self.testing_folder = testing_folder
+        self.other_folder = other_folder
         self.onEpoch = onEpoch
         self.epochs=epochs
         self.batchSize = batchSize
@@ -49,9 +50,11 @@ class TrainingThread(threading.Thread):
         self.report_path = reportPath
 
     def run(self):
-        self.trainable.train(self.model_folder,self.training_folder,self.testing_folder,epoch_callback=lambda epoch,metrics:self.progress_cb(epoch,metrics),epochs=self.epochs,batch_size=self.batchSize,completion_callback=self.onCompletion,batch_callback=self.onBatch)
+        self.trainable.train(self.model_folder,self.training_folder,self.testing_folder,epoch_callback=lambda epoch,metrics:self.progress_cb(epoch,metrics),epochs=self.epochs,batch_size=self.batchSize,batch_callback=self.onBatch)
         if self.report_path:
-            self.trainable.evaluate(self.report_path)
+            self.trainable.evaluate(self.report_path,self.other_folder)
+        if self.onCompletion:
+            self.onCompletion()
 
     def progress_cb(self,epoch,metrics):
         if self.onEpoch:
@@ -73,6 +76,7 @@ class Trainer(object):
         self.model_folder = ""
         self.training_folder = ""
         self.testing_folder = ""
+        self.other_folder = ""
         self.data_info = None
         self.report_path = ""
 
@@ -127,8 +131,8 @@ class Trainer(object):
             self.model_details = self.architecture
             self.model_url = "models/model.h5"
             self.model_filename = "model.h5"
+            self.report_path = os.path.join(model_dir, "training_report.html")
             if self.getType() == "classifier":
-                self.report_path = os.path.join(model_dir, "training_report.html")
                 self.trainable = TrainableClassifier()
                 self.trainable.createEmpty(self.model_path, self.train_classes, {TrainableClassifier.ARCHITECTURE: self.architecture})
             else:
@@ -140,6 +144,7 @@ class Trainer(object):
             self.model_folder,
             self.training_folder,
             self.testing_folder,
+            self.other_folder,
             self.trainable,
             onEpoch=lambda epoch,metrics: self.updateTrainingProgress(epoch,metrics),
             epochs=self.current_nr_epochs,
@@ -216,6 +221,9 @@ class Trainer(object):
             self.training_folder = partition_dir
         if partition == "testing":
             self.testing_folder = partition_dir
+        if partition == "other":
+            # autoencoder
+            self.other_folder = partition_dir
 
         # FIXME check train and test classes are identical if both non-empty
 

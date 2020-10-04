@@ -17,7 +17,7 @@
         <legend>Data Settings</legend>
         <div class="row">
             <div class="one-half column">
-                <label for="upload_training_data_file">Choose Training Data Zip to Upload</label>
+                <label for="upload_training_data_file">Choose Training Examples Zip to Upload</label>
             </div>
             <div class="one-half column">
                 <input type="file" id="upload_training_data_file"/>
@@ -27,11 +27,21 @@
         </div>
         <div class="row">
             <div class="one-half column">
-                <label for="upload_testing_data_file">Choose Testing Data Zip to Upload</label>
+                <label for="upload_testing_data_file">Choose Testing Examples Zip to Upload</label>
             </div>
             <div class="one-half column">
                 <input type="file" id="upload_testing_data_file"/>
                 <progress id="upload_testing_data_progress" min="0" max="100" value="0" style="display:none;">0% complete
+                </progress>
+            </div>
+        </div>
+        <div class="row">
+            <div class="one-half column">
+                <label for="upload_other_data_file">Choose Other Images Zip to Upload (for Model Evaluation)</label>
+            </div>
+            <div class="one-half column">
+                <input type="file" id="upload_other_data_file"/>
+                <progress id="upload_other_data_progress" min="0" max="100" value="0" style="display:none;">0% complete
                 </progress>
             </div>
         </div>
