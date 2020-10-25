@@ -146,8 +146,8 @@ class ChartUtils(object):
         min_x = 0 if total_epochs == 1 else 1
 
         palette = DiscretePalette()
-        palette.addCategory("training", "red")
-        palette.addCategory("test", "blue")
+        palette.addColour("training", "red")
+        palette.addColour("test", "blue")
 
         al = Line(dataset, x=0, y=1, colour=2, width=600, height=200, font_height=14, palette=palette, line_width=5)
 

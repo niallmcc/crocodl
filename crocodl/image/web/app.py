@@ -19,7 +19,7 @@ from flask import Flask, send_from_directory
 
 # flask initialisation and configuration (see config.py)
 app = Flask(__name__)
-app.config.from_object('config.Config')
+app.config.from_object('crocodl.image.web.config.Config')
 
 from crocodl.utils.log_utils import createLogger
 

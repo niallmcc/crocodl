@@ -48,9 +48,6 @@ class Trainable(object):
 		self.test_folder = ""
 
 	def clearOutput(self):
-		model_path = os.path.join(self.model_folder,"model.h5")
-		if os.path.exists(model_path):
-			os.unlink(model_path)
 		json_path = os.path.join(self.model_folder,"status.json")
 		if os.path.exists(json_path):
 			os.unlink(json_path)

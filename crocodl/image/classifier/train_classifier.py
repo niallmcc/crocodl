@@ -36,7 +36,7 @@ class ImageClassifierTrainer(object):
             metadata,model = utils.load(self.model_path)
             metrics = metadata["metrics"]
         else:
-            model = utils.createModel()
+            model = utils.createModel(training_classes=len(classes))
             metrics = []
 
         train_it = utils.getInputIterator(training_folder, batch_size=batch_size)

@@ -49,8 +49,7 @@ class TrainRuntime extends Runtime {
 
         this.create_model = $("create_model");
         this.upload_model = $("upload_model");
-
-        this.epoch = 0;
+        
         this.metrics = [];
         this.refreshTrainingGraph();
 
@@ -78,15 +77,17 @@ class TrainRuntime extends Runtime {
             }
         }
 
-        this.fileInputOther.onchange = function() {
-            that.setDataInfo("Uploading other images...");
-            var files = that.fileInputOther.files;
-            for (var i = 0; i < files.length; i++) {
-                var file = files[i];
-                that.upload(file, 'data_upload/other/', 'upload_other_data_progress',function(result) {
-                    that.updateTrainingSettings();
-                    that.checkStatus();
-                });
+        if (this.fileInputOther) {
+            this.fileInputOther.onchange = function() {
+                that.setDataInfo("Uploading other images...");
+                var files = that.fileInputOther.files;
+                for (var i = 0; i < files.length; i++) {
+                    var file = files[i];
+                    that.upload(file, 'data_upload/other/', 'upload_other_data_progress',function(result) {
+                        that.updateTrainingSettings();
+                        that.checkStatus();
+                    });
+                }
             }
         }
 
@@ -352,6 +353,10 @@ class TrainRuntime extends Runtime {
         var model_filename = status["model_filename"];
         var model_ready = status["model_ready"];
         var create_or_update = status["create_or_update"];
+        var fresh_metrics = false;
+        if (this.metrics.length != status["metrics"].length) {
+            fresh_metrics = true;
+        }
         this.metrics = status["metrics"];
         if (create_or_update == "create") {
             this.create_model.checked = true;
@@ -363,30 +368,17 @@ class TrainRuntime extends Runtime {
 
         this.setModelInfo(JSON.stringify(model_details));
 
-        var completed_epochs = status["epoch"];
-
         this.batch_size.value = ""+status["batch_size"];
-        var orig_nr_epochs = this.nr_epochs.value;
-        this.nr_epochs.value = ""+status["nr_epochs"];
 
 
-        if (this.training) {
-            var batch = status["batch"];
-            var msg = "Training... Epoch "+completed_epochs+" / Batch "+batch;
-            this.setTrainingStatus(msg);
-        }
+        this.setTrainingStatus(status["training_status"]);
 
         this.trainingProgress.value = status["progress"] * 100;
         this.trainingProgress.textContent = this.trainingProgress.value;
         var that = this;
 
-        if (this.training && completed_epochs != this.epoch || (was_training && !this.training)) {
+        if (fresh_metrics) {
             this.refreshTrainingGraph();
-            this.epoch = completed_epochs;
-        } else {
-            if (this.nr_epochs.value != orig_nr_epochs) {
-                this.refreshTrainingGraph();
-            }
         }
 
         this.configureSelect(this.chartTypes,status["chart_types"],status["chart_type"]);

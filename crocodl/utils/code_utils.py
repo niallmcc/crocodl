@@ -32,6 +32,7 @@ def expand_imports(src,pattern,root_folder,expanded_filenames=set()):
             match = matches[1]
             filename = os.path.join(root_folder,*match.split("."))+".py"
             if filename not in expanded_filenames:
+                print(filename)
                 expanded_filenames.add(filename)
                 s = open(filename,"r").read()
                 s = expand_imports(s,pattern,root_folder,expanded_filenames)

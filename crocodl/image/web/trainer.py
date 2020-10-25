@@ -34,7 +34,7 @@ from crocodl.image.web.scorer import ClassifierScorer, AutoencoderScorer
 
 class TrainingThread(threading.Thread):
 
-    def __init__(self,trainer,model_folder,training_folder,testing_folder,other_folder,trainable,onEpoch,epochs=5,batchSize=16,onCompletion=None,onBatch=None,reportPath=None):
+    def __init__(self,trainer,model_folder,training_folder,testing_folder,other_folder,trainable,onEpoch,epochs=5,batchSize=16,onCompletion=None,onEvaluationProgress=None,onBatch=None,reportPath=None):
         super(TrainingThread,self).__init__(target=self)
         self.trainer = trainer
         self.model_folder = model_folder
@@ -45,6 +45,7 @@ class TrainingThread(threading.Thread):
         self.epochs=epochs
         self.batchSize = batchSize
         self.onCompletion=onCompletion
+        self.onEvaluationProgress = onEvaluationProgress
         self.onBatch=onBatch
         self.trainable = trainable
         self.report_path = reportPath
@@ -52,7 +53,11 @@ class TrainingThread(threading.Thread):
     def run(self):
         self.trainable.train(self.model_folder,self.training_folder,self.testing_folder,epoch_callback=lambda epoch,metrics:self.progress_cb(epoch,metrics),epochs=self.epochs,batch_size=self.batchSize,batch_callback=self.onBatch)
         if self.report_path:
+            if self.onEvaluationProgress:
+                self.onEvaluationProgress(0.0)
             self.trainable.evaluate(self.report_path,self.other_folder)
+            if self.onEvaluationProgress:
+                self.onEvaluationProgress(1.0)
         if self.onCompletion:
             self.onCompletion()
 
@@ -79,6 +84,8 @@ class Trainer(object):
         self.other_folder = ""
         self.data_info = None
         self.report_path = ""
+        self.training_status = ""
+        self.completed_epoch = 0
 
         self.model_details = {}
         self.model_filename = ""
@@ -108,15 +115,23 @@ class Trainer(object):
     logger = createLogger("train_app")
 
     def updateTrainingProgress(self,epoch,metrics):
-        self.progress = epoch/self.current_nr_epochs
+        self.progress = epoch/(2+self.current_nr_epochs)
         self.metrics = metrics
+        self.completed_epoch = epoch
+        self.training_status = "Completed Epoch %d/%d"%(epoch,self.current_nr_epochs)
 
     def updateTrainingBatch(self,batch):
         self.current_batch = batch
+        self.training_status = "Running Epoch %d Batch %d"%(self.completed_epoch+1,self.current_batch)
 
-    def setTrainingCompleted(self):
+    def updateEvaluationProgress(self,fraction_complete):
+        self.progress = fraction_complete
+        self.training_status = "Evaluating"
+
+    def setCompleted(self):
         self.progress = 1.0
         self.training = False
+        self.training_status = "Trained"
 
     def submit(self):
         if self.trainable == None:
@@ -127,7 +142,8 @@ class Trainer(object):
             self.model_folder = model_dir
 
             self.model_path = os.path.join(model_dir, "model.h5")
-
+            self.completed_epoch = 0
+            self.current_batch = 0
             self.model_details = self.architecture
             self.model_url = "models/model.h5"
             self.model_filename = "model.h5"
@@ -149,7 +165,8 @@ class Trainer(object):
             onEpoch=lambda epoch,metrics: self.updateTrainingProgress(epoch,metrics),
             epochs=self.current_nr_epochs,
             batchSize=self.batch_size,
-            onCompletion=lambda : self.setTrainingCompleted(),
+            onCompletion=lambda : self.setCompleted(),
+            onEvaluationProgress=lambda f: self.updateEvaluationProgress(f),
             onBatch=lambda batch,epoch: self.updateTrainingBatch(batch),
             reportPath=self.report_path)
 
@@ -167,9 +184,8 @@ class Trainer(object):
         return {
             "progress":self.progress,
             "training":self.training,
-            "epoch":1+len(self.metrics),
+            "training_status":self.training_status,
             "metrics":self.metrics,
-            "batch":self.current_batch,
             "data_info":self.data_info,
             "model_details":self.model_details,
             "model_filename":self.model_filename,
