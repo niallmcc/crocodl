@@ -1,5 +1,5 @@
 wheel
-tensorflow==2.2.0
+tensorflow==2.4.0
 pillow
 visigoth
 requests
