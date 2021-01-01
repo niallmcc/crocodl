@@ -33,15 +33,13 @@ docker run -p 9099:9099 crocodl
 
 This service allows you to train a model to classify images.  Go to `http://localhost:9099/train_classifier/index.html`
 
-* First, in the `Data Settings` section, load the zip file containing the image files to train with.  Press the `Browse` button and select the data zip.  
+* First, in the `Data Settings` section, load two zip files containing the image files to train with and to test the model performance.  Press the `Browse` button and select the data zip.  
 
 The layout of the zip file groups sets of images into different classes.  
 
 In the example below these classes are named class1, class2 and class3.  You can specify as many classes as you wish and any class names can be used but at least two are required.
 
 ```
-root
-  train
      class1
         image1.jpg
         image2.jpg
@@ -51,25 +49,14 @@ root
         ...
      class3
         ... 
-  test
-     class1
-        imageX1.jpg
-        imageX2.pg
-        ...
-     class2
-        imageA.jpg
-        image123.png
-        ...
-     class3
-        ...
 ```
 
 The model that you train will try to learn how to classify an image into one of these classes (in the example above, class1, class2 or class3)
 
-For an example data folder layout, see the `data/dogs_vs_cats.zip` file.
-
 * Next, in the `Model Settings` section, create a new empty model (`Create Model` button) or open an existing model (`Open Model` button, then browse for the existing model file) for continued training.  
+
 If opening an existing model it must have been trained/created using this program on the same classes as the currently loaded data. 
+
 If creating a new model, you can configure the architecture to be used - which will influence the size of the model, its training speed and its effectiveness on a particular classification task.
 
 * In the `Training Settings` section, if necessary configure the number of epochs (training steps) and batch size (the number of images grouped into in each training batch), then press the `Train` button to start training the model.

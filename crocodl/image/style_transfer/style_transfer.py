@@ -64,7 +64,7 @@ class StyleTransfer(object):
                 print(str(self.output_files))
                 self.iteration_cb(self.output_files)
 
-response = requests.get("https://raw.githubusercontent.com/keras-team/keras/master/examples/neural_style_transfer.py")
+response = requests.get("https://github.com/keras-team/keras/raw/f295e8ee39d4ba841ac281a9337d69c7bc5e0eb6/examples/neural_style_transfer.py")
 StyleTransfer.code = response.content
 
 if __name__ == '__main__':
