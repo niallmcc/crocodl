@@ -29,7 +29,6 @@ class TrainRuntime extends Runtime {
         var that = this;
         this.fileInputTraining = $("upload_training_data_file");
         this.fileInputTesting = $("upload_testing_data_file");
-        this.fileInputOther = $("upload_other_data_file"); // autoencoder only
 
         this.dataInfo = $("data_info");
         this.modelInfo = $("model_info");
@@ -77,19 +76,7 @@ class TrainRuntime extends Runtime {
             }
         }
 
-        if (this.fileInputOther) {
-            this.fileInputOther.onchange = function() {
-                that.setDataInfo("Uploading other images...");
-                var files = that.fileInputOther.files;
-                for (var i = 0; i < files.length; i++) {
-                    var file = files[i];
-                    that.upload(file, 'data_upload/other/', 'upload_other_data_progress',function(result) {
-                        that.updateTrainingSettings();
-                        that.checkStatus();
-                    });
-                }
-            }
-        }
+
 
         this.modelInput.onchange = function() {
             var files = that.modelInput.files;
@@ -183,18 +170,12 @@ class TrainRuntime extends Runtime {
             this.architectures.disabled = true;
             this.fileInputTraining.disabled = true;
             this.fileInputTesting.disabled = true;
-            if (this.fileInputOther) {
-                this.fileInputOther.disabled = true;
-            }
             this.create_model.disabled = true;
             this.upload_model.disabled = true;
         } else {
             this.train_button.value = "Start training";
             this.fileInputTraining.disabled = false;
             this.fileInputTesting.disabled = false;
-            if (this.fileInputOther) {
-                this.fileInputOther.disabled = false;
-            }
             this.create_model.disabled = !this.data_ready;
             this.upload_model.disabled = !this.data_ready;
             this.train_button.setAttribute("class","button-primary");

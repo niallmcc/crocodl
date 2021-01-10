@@ -26,16 +26,12 @@ from crocodl.utils.log_utils import createLogger
 from crocodl.image.web.style_blueprint import style_blueprint
 from crocodl.image.web.search_blueprint import search_blueprint
 from crocodl.image.web.train_classifier_blueprint import train_classifier_blueprint
-from crocodl.image.web.train_autoencoder_blueprint import train_autoencoder_blueprint
 from crocodl.image.web.score_classifier_blueprint import score_classifier_blueprint
-from crocodl.image.web.score_autoencoder_blueprint import score_autoencoder_blueprint
 
 app.register_blueprint(style_blueprint,url_prefix="/style_transfer")
 app.register_blueprint(search_blueprint,url_prefix="/search")
 app.register_blueprint(train_classifier_blueprint,url_prefix="/train_classifier")
-app.register_blueprint(train_autoencoder_blueprint,url_prefix="/train_autoencoder")
 app.register_blueprint(score_classifier_blueprint,url_prefix="/score_classifier")
-app.register_blueprint(score_autoencoder_blueprint,url_prefix="/score_autoencoder")
 
 class App(object):
     """

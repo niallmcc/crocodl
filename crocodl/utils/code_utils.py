@@ -23,7 +23,9 @@ def specialise_imports(model_factory,code):
     return code.replace("from crocodl.runtime.model_utils import createModelUtils",
     					"from %s import %s\ncreateModelUtils = %s.createModelUtils"%(module_name,class_name,class_name))
 
-def expand_imports(src,pattern,root_folder,expanded_filenames=set()):
+def expand_imports(src,pattern,root_folder,expanded_filenames=None):
+    if expanded_filenames is None:
+        expanded_filenames = set()
     lines = src.split("\n")
     for idx in range(len(lines)):
         line = lines[idx]
@@ -42,8 +44,7 @@ def expand_imports(src,pattern,root_folder,expanded_filenames=set()):
                         break
                 s = "\n".join(slines[jdx:])
                 lines[idx] = s
+            else:
+                lines[idx] = ""
     return "\n".join(lines)
 
-if __name__ == '__main__':
-    xpanded = expand_imports(open("/crocodl/image/autoencoder/train_autoencoder.py").read(), re.compile("from (crocodl\.utils\.[^ ]*) import .*"))
-    open("/tmp/test.py","w").write(xpanded)

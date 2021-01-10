@@ -24,7 +24,6 @@ from crocodl.utils.log_utils import createLogger
 from crocodl.runtime.h5_utils import read_metadata
 from crocodl.image.model_registry.registry import Registry
 from crocodl.image.classifier.scorable import Scorable as ScorableClassifier
-from crocodl.image.autoencoder.scorable import Scorable as ScorableAutoEncoder
 from crocodl.utils.web.code_formatter import CodeFormatter
 
 class Scorer(object):
@@ -97,18 +96,8 @@ class Scorer(object):
             cf = CodeFormatter()
             if self.getType() == "classifier":
                 return cf.formatHTML(ScorableClassifier.getCode(self.architecture))
-            elif self.getType() == "autoencoder":
-                return cf.formatHTML(ScorableAutoEncoder.getCode(self.architecture))
 
         return "Select model options to view scoring code"
-
-class AutoencoderScorer(Scorer):
-
-    def getType(self):
-        return "autoencoder"
-
-    def getScorable(self):
-        return ScorableAutoEncoder()
 
 class ClassifierScorer(Scorer):
 

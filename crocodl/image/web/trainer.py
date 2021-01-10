@@ -28,8 +28,7 @@ from crocodl.image.web.data_utils import unpack_data, get_classes
 from crocodl.utils.web.code_formatter import CodeFormatter
 from crocodl.runtime.h5_utils import read_metadata
 from crocodl.image.classifier.trainable import Trainable as TrainableClassifier
-from crocodl.image.autoencoder.trainable import Trainable as TrainableAutoEncoder
-from crocodl.image.web.scorer import ClassifierScorer, AutoencoderScorer
+from crocodl.image.web.scorer import ClassifierScorer
 
 
 class TrainingThread(threading.Thread):
@@ -109,8 +108,7 @@ class Trainer(object):
 
         if self.getType() == "classifier":
             self.scorer = ClassifierScorer()
-        elif self.getType() == "autoencoder":
-            self.scorer = AutoencoderScorer()
+
 
     logger = createLogger("train_app")
 
@@ -151,9 +149,6 @@ class Trainer(object):
             if self.getType() == "classifier":
                 self.trainable = TrainableClassifier()
                 self.trainable.createEmpty(self.model_path, self.train_classes, {TrainableClassifier.ARCHITECTURE: self.architecture})
-            else:
-                self.trainable = TrainableAutoEncoder()
-                self.trainable.createEmpty(self.model_path, self.train_classes, {TrainableAutoEncoder.ARCHITECTURE: self.architecture})
         self.scorer.set_model_path(self.model_path)
         self.training_thread = TrainingThread(
             self,
@@ -226,20 +221,13 @@ class Trainer(object):
         os.makedirs(partition_dir)
 
         open(upload_path,"wb").write(data)
-        if self.getType() == "autoencoder":
-            # for autoencoder, create an extra directory level to represent a dummy class
-            unpack_dir = os.path.join(partition_dir, "auto")
-        else:
-            unpack_dir = partition_dir
+        unpack_dir = partition_dir
         unpack_data(upload_path,unpack_dir)
 
         if partition == "training":
             self.training_folder = partition_dir
         if partition == "testing":
             self.testing_folder = partition_dir
-        if partition == "other":
-            # autoencoder
-            self.other_folder = partition_dir
 
         # FIXME check train and test classes are identical if both non-empty
 
@@ -251,13 +239,6 @@ class Trainer(object):
             self.data_info = {"classes": self.train_classes if self.train_classes else self.test_classes}
             self.architectures = Registry.getAvailableArchitectures(Capability.classification)
             self.chart_types = ["accuracy", "loss"]
-
-        elif self.getType() == "autoencoder":
-            self.data_info = {}
-            self.architectures = Registry.getAvailableArchitectures(Capability.autoencoder)
-            self.chart_types = ["loss"]
-            self.chart_type = "loss"
-
         return {}
 
     def update_training_settings(self,settings):
@@ -295,10 +276,7 @@ class Trainer(object):
         self.model_path = os.path.join(model_dir, path)
         open(self.model_path, "wb").write(data)
 
-        if len(self.train_classes) > 1:
-            self.trainable = TrainableClassifier()
-        else:
-            self.trainable = TrainableAutoEncoder()
+        self.trainable = TrainableClassifier()
         self.trainable.open(self.model_path)
 
         metadata = read_metadata(self.model_path)
@@ -315,8 +293,6 @@ class Trainer(object):
             cf = CodeFormatter()
             if self.getType() == "classifier":
                 return cf.formatHTML(TrainableClassifier.getCode(self.architecture))
-            elif self.getType() == "autoencoder":
-                return cf.formatHTML(TrainableAutoEncoder.getCode(self.architecture))
 
         return "Select model options to view training code"
 

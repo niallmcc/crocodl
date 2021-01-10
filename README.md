@@ -12,8 +12,7 @@ Currently supports:
 
 * Image Classification (with transfer learning, based on VGG16 or MobileNetV2)
 * Image Search (using image embeddings computed using VGG16 or MobileNetV2)
-* Fancy image effects with style transfer
-* One-class classification with autoencoders (COMING SOON)
+* Image Style Transfer
 
 ## Installation
 

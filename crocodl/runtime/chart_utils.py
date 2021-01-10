@@ -49,33 +49,6 @@ class ChartUtils(object):
         t = Table(data=data,headings=["class","training count","testing count"],font_height=18)
         self.diagram.add(t)
 
-    def addAutoencoderInfo(self, training_stats, test_stats, other_stats):
-        self.diagram.add(Text("Evaluation Data", font_height=24))
-        data = []
-        for (partition,stats) in [("training",training_stats),("testing",test_stats),("other",other_stats)]:
-            count = stats["count"]
-            data.append({"Partition": partition, "Count": count})
-        t = Table(data=data, headings=["Partition", "Count"], font_height=18)
-        self.diagram.add(t)
-
-    def addAutoencoderHistograms(self, training_scores, test_scores, other_scores=None):
-        max_score = max(training_scores+test_scores+(other_scores if other_scores else []))
-        self.diagram.add(Text("Autoencoder Performance - Training Images", font_height=24))
-        self.addAutoencoderHistogram(training_scores,max_score)
-        self.diagram.add(Text("Autoencoder Performance - Testing Images", font_height=24))
-        self.addAutoencoderHistogram(test_scores,max_score)
-        if other_scores:
-            self.diagram.add(Text("Autoencoder Performance - Other Images", font_height=24))
-            self.addAutoencoderHistogram(other_scores,max_score)
-
-    def addAutoencoderHistogram(self, scores, max_score):
-        data = list(map(lambda score:[score],scores))
-        h = Histogram(height=300,width=800,data=data,x=0)
-        (ax,ay) = h.getAxes()
-        ax.setMinValue(0.0)
-        ax.setMaxValue(math.ceil(max_score*10)/10)
-        self.diagram.add(h)
-
     def addConfusionMatrices(self,classes,training_score_freqs,test_score_freqs):
         self.diagram.add(Text("Confusion Matrix - Training", font_height=24))
         self.addConfusionMatrix(classes,training_score_freqs)

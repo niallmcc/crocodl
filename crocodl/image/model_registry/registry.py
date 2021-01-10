@@ -17,11 +17,10 @@
 
 from crocodl.image.model_registry.vgg_models import VGGModel
 from crocodl.image.model_registry.mobilenetv2_models import MobileNetV2Model
-from crocodl.image.model_registry.autoencoder_models import AutoencoderModel
 
 class Registry(object):
 
-    MODELS = [MobileNetV2Model, VGGModel, AutoencoderModel]
+    MODELS = [MobileNetV2Model, VGGModel]
 
     @staticmethod
     def getModel(architecture_name):
@@ -29,8 +28,6 @@ class Registry(object):
             return VGGModel(architecture_name)
         if architecture_name in MobileNetV2Model.getArchitectureNames():
             return MobileNetV2Model(architecture_name)
-        if architecture_name in AutoencoderModel.getArchitectureNames():
-            return AutoencoderModel(architecture_name)
         raise Exception("No model found for architecture named %s"%(architecture_name))
 
     @staticmethod
